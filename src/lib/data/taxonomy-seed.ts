@@ -1,0 +1,45 @@
+import type { Taxonomy } from "@/types/taxonomy";
+
+const now = "2025-01-15T00:00:00.000Z";
+
+export const taxonomySeed: Taxonomy = {
+  categories: [
+    { slug: "wine-accessories", name: "Wine Accessories", sortOrder: 0, createdAt: now, updatedAt: now },
+    { slug: "barware", name: "Barware", sortOrder: 1, createdAt: now, updatedAt: now },
+    { slug: "whiskey-accessories", name: "Whiskey Accessories", sortOrder: 2, createdAt: now, updatedAt: now },
+    { slug: "coffee-accessories", name: "Coffee Accessories", sortOrder: 3, createdAt: now, updatedAt: now },
+    { slug: "kitchen-gadgets", name: "Kitchen Gadgets", sortOrder: 4, createdAt: now, updatedAt: now },
+    { slug: "lifestyle-accessories", name: "Lifestyle Accessories", sortOrder: 5, createdAt: now, updatedAt: now },
+    { slug: "sets", name: "Sets", sortOrder: 6, createdAt: now, updatedAt: now },
+  ],
+  subCategories: [
+    { slug: "waiters-corkscrews", name: "Waiter's Corkscrews", categorySlug: "wine-accessories", sortOrder: 0, createdAt: now, updatedAt: now },
+    { slug: "easy-corkscrews", name: "Easy Corkscrews", categorySlug: "wine-accessories", sortOrder: 1, createdAt: now, updatedAt: now },
+    { slug: "wine-stoppers", name: "Wine Stoppers", categorySlug: "wine-accessories", sortOrder: 2, createdAt: now, updatedAt: now },
+    { slug: "wine-charms", name: "Wine Charms", categorySlug: "wine-accessories", sortOrder: 3, createdAt: now, updatedAt: now },
+    { slug: "other-wine-accessories", name: "Other Wine Accessories", categorySlug: "wine-accessories", sortOrder: 4, createdAt: now, updatedAt: now },
+    { slug: "cocktail-shakers", name: "Cocktail Shakers", categorySlug: "barware", sortOrder: 0, createdAt: now, updatedAt: now },
+    { slug: "jiggers", name: "Jiggers", categorySlug: "barware", sortOrder: 1, createdAt: now, updatedAt: now },
+    { slug: "strainers", name: "Strainers", categorySlug: "barware", sortOrder: 2, createdAt: now, updatedAt: now },
+    { slug: "mixing-glasses", name: "Mixing Glasses", categorySlug: "barware", sortOrder: 3, createdAt: now, updatedAt: now },
+    { slug: "bar-accessories", name: "Bar Accessories", categorySlug: "barware", sortOrder: 4, createdAt: now, updatedAt: now },
+    { slug: "whiskey-glasses", name: "Whiskey Glasses", categorySlug: "whiskey-accessories", sortOrder: 0, createdAt: now, updatedAt: now },
+    { slug: "whiskey-stones", name: "Whiskey Stones", categorySlug: "whiskey-accessories", sortOrder: 1, createdAt: now, updatedAt: now },
+    { slug: "ice-moulds", name: "Ice Moulds", categorySlug: "whiskey-accessories", sortOrder: 2, createdAt: now, updatedAt: now },
+    { slug: "ice-buckets", name: "Ice Buckets", categorySlug: "whiskey-accessories", sortOrder: 3, createdAt: now, updatedAt: now },
+    { slug: "other-whiskey-accessories", name: "Other Whiskey Accessories", categorySlug: "whiskey-accessories", sortOrder: 4, createdAt: now, updatedAt: now },
+    { slug: "coffee-tools", name: "Coffee Tools", categorySlug: "coffee-accessories", sortOrder: 0, createdAt: now, updatedAt: now },
+    { slug: "other-coffee-accessories", name: "Coffee Accessories", categorySlug: "coffee-accessories", sortOrder: 1, createdAt: now, updatedAt: now },
+    { slug: "citrus-squeezers", name: "Citrus Squeezers", categorySlug: "kitchen-gadgets", sortOrder: 0, createdAt: now, updatedAt: now },
+    { slug: "nutcrackers", name: "Nutcrackers", categorySlug: "kitchen-gadgets", sortOrder: 1, createdAt: now, updatedAt: now },
+    { slug: "other-kitchen-gadgets", name: "Kitchen Gadgets", categorySlug: "kitchen-gadgets", sortOrder: 2, createdAt: now, updatedAt: now },
+    { slug: "hip-flasks", name: "Hip Flasks", categorySlug: "lifestyle-accessories", sortOrder: 0, createdAt: now, updatedAt: now },
+    { slug: "hip-flask-sets", name: "Hip Flask Sets", categorySlug: "lifestyle-accessories", sortOrder: 1, createdAt: now, updatedAt: now },
+    { slug: "cigar-cutters", name: "Cigar Cutters", categorySlug: "lifestyle-accessories", sortOrder: 2, createdAt: now, updatedAt: now },
+    { slug: "bartender-sets", name: "Bartender Sets", categorySlug: "sets", sortOrder: 0, createdAt: now, updatedAt: now },
+    { slug: "wine-sets", name: "Wine Sets", categorySlug: "sets", sortOrder: 1, createdAt: now, updatedAt: now },
+    { slug: "whiskey-sets", name: "Whiskey Sets", categorySlug: "sets", sortOrder: 2, createdAt: now, updatedAt: now },
+    { slug: "coffee-sets", name: "Coffee Sets", categorySlug: "sets", sortOrder: 3, createdAt: now, updatedAt: now },
+    { slug: "other-sets", name: "Other Sets", categorySlug: "sets", sortOrder: 4, createdAt: now, updatedAt: now },
+  ],
+};
