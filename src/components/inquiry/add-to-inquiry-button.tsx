@@ -184,7 +184,7 @@ export function InquiryNavLink({ compact = false }: InquiryNavLinkProps) {
     >
       {compact ? "Inquiry" : "Inquiry List"}
       {isHydrated && itemCount > 0 ? (
-        <span className="ml-1.5 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-accent px-1.5 text-xs font-semibold text-accent-foreground">
+        <span className="ml-1.5 inline-flex h-5 min-w-5 items-center justify-center rounded-full border border-gold bg-gold px-1.5 text-xs font-semibold text-gold-foreground">
           {itemCount}
         </span>
       ) : null}

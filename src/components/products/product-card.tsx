@@ -16,7 +16,7 @@ export function ProductCard({ product }: ProductCardProps) {
     <article
       className={cn(
         "group relative rounded-sm border border-border bg-surface transition-colors",
-        "hover:border-accent/30 hover:shadow-sm",
+        "hover:border-gold/40 hover:shadow-sm",
       )}
     >
       <Link href={`/products/${product.slug}`} className="block">

@@ -1,16 +1,26 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #1a1a1a;
-  --muted: #6b7280;
-  --muted-bg: #f9f7f7;
-  --border: #e8e4e4;
-  --accent: #802828;
-  --accent-hover: #6b2020;
-  --accent-foreground: #ffffff;
-  --accent-light: #f9f0f0;
-  --surface: #ffffff;
+  /* Wine red foundation */
+  --background: #faf6f4;
+  --foreground: #2a1215;
+  --muted: #7a5c5c;
+  --muted-bg: #f0e4e4;
+  --border: #dcc4c4;
+  --surface: #fffbfb;
+
+  /* Primary — burgundy / wine */
+  --accent: #6b2737;
+  --accent-hover: #551f2c;
+  --accent-foreground: #fffaf8;
+  --accent-light: #ede0e0;
+
+  /* Gold accents — brighter for visibility */
+  --gold: #d4af37;
+  --gold-hover: #c19b2e;
+  --gold-foreground: #2a1215;
+  --gold-light: #f5e6b8;
+  --gold-muted: #e8c96a;
 }
 
 @theme inline {
@@ -23,11 +33,21 @@
   --color-accent-hover: var(--accent-hover);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent-light: var(--accent-light);
+  --color-gold: var(--gold);
+  --color-gold-hover: var(--gold-hover);
+  --color-gold-foreground: var(--gold-foreground);
+  --color-gold-light: var(--gold-light);
+  --color-gold-muted: var(--gold-muted);
   --color-surface: var(--surface);
   --font-sans: var(--font-inter);
 }
 
 body {
   background: var(--background);
+  color: var(--foreground);
+}
+
+::selection {
+  background: color-mix(in srgb, var(--gold) 45%, white);
   color: var(--foreground);
 }

@@ -2,14 +2,23 @@ import Link from "next/link";
 import { cn } from "@/lib/utils/cn";
 
 const variants = {
+  /** Solid wine red — default on light backgrounds */
   primary:
     "bg-accent text-accent-foreground hover:bg-accent-hover border border-transparent",
   secondary:
     "bg-surface text-foreground hover:bg-muted-bg border border-border",
+  /** Wine outline on light backgrounds */
   outline:
-    "bg-transparent text-foreground hover:bg-muted-bg border border-border",
-  ghost: "bg-transparent text-foreground hover:bg-muted-bg border border-transparent",
+    "bg-transparent text-accent hover:bg-accent-light border border-accent",
+  ghost:
+    "bg-transparent text-foreground hover:bg-muted-bg border border-transparent",
   link: "bg-transparent text-accent hover:text-accent-hover border border-transparent underline-offset-4 hover:underline p-0 h-auto",
+  /** Solid light button on wine/dark sections */
+  onDark:
+    "bg-accent-foreground text-accent hover:bg-accent-foreground/90 border border-transparent",
+  /** Light outline on wine/dark sections */
+  onDarkOutline:
+    "bg-transparent text-accent-foreground border border-accent-foreground/45 hover:bg-accent-foreground/10",
 } as const;
 
 const sizes = {

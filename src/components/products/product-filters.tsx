@@ -135,7 +135,7 @@ function FilterPill({
         size === "sm" ? "px-2.5 py-1 text-xs" : "px-3 py-1.5 text-sm",
         active
           ? "border-accent bg-accent text-accent-foreground"
-          : "border-border bg-surface text-foreground/80 hover:border-accent/30 hover:bg-muted-bg",
+          : "border-border bg-surface text-foreground/80 hover:border-gold/40 hover:bg-muted-bg",
       )}
     >
       {label}

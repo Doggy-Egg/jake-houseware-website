@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils/cn";
 
-type BadgeVariant = "default" | "accent" | "outline";
+type BadgeVariant = "default" | "accent" | "gold" | "outline";
 
 type BadgeProps = {
   children: React.ReactNode;
@@ -10,7 +10,8 @@ type BadgeProps = {
 
 const variants: Record<BadgeVariant, string> = {
   default: "bg-muted-bg text-foreground border-border",
-  accent: "bg-accent-light text-accent border-accent/20",
+  accent: "bg-accent-light text-accent border-accent/30",
+  gold: "border-2 border-gold bg-gold text-gold-foreground font-semibold shadow-sm",
   outline: "bg-transparent text-muted border-border",
 };
 

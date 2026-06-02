@@ -30,6 +30,8 @@ const listeners = new Set<() => void>();
 let items: InquiryItem[] = [];
 let clientLoaded = false;
 
+const noopSubscribe = () => () => {};
+
 function readStoredItems(): InquiryItem[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -41,27 +43,40 @@ function readStoredItems(): InquiryItem[] {
   }
 }
 
+function ensureClientLoaded() {
+  if (typeof window === "undefined" || clientLoaded) return;
+  clientLoaded = true;
+  items = readStoredItems();
+}
+
 function persistItems(nextItems: InquiryItem[]) {
   items = nextItems;
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(nextItems));
+  if (typeof window !== "undefined") {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(nextItems));
+  }
   listeners.forEach((listener) => listener());
 }
 
 function subscribe(listener: () => void) {
+  ensureClientLoaded();
   listeners.add(listener);
   return () => listeners.delete(listener);
 }
 
 function getSnapshot() {
-  if (typeof window !== "undefined" && !clientLoaded) {
-    items = readStoredItems();
-    clientLoaded = true;
-  }
   return items;
 }
 
 function getServerSnapshot() {
   return [] as InquiryItem[];
+}
+
+function useClientHydrated() {
+  return useSyncExternalStore(
+    noopSubscribe,
+    () => true,
+    () => false,
+  );
 }
 
 export function InquiryProvider({ children }: { children: React.ReactNode }) {
@@ -70,10 +85,10 @@ export function InquiryProvider({ children }: { children: React.ReactNode }) {
     getSnapshot,
     getServerSnapshot,
   );
-
-  const isHydrated = typeof window !== "undefined";
+  const isHydrated = useClientHydrated();
 
   const addItem = useCallback((product: Product, quantity = 1) => {
+    ensureClientLoaded();
     const current = getSnapshot();
     const existing = current.find((item) => item.productId === product.id);
     const productImage = getProductPrimaryImage(product);
@@ -108,11 +123,13 @@ export function InquiryProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const removeItem = useCallback((productId: string) => {
+    ensureClientLoaded();
     persistItems(getSnapshot().filter((item) => item.productId !== productId));
   }, []);
 
   const updateQuantity = useCallback((productId: string, quantity: number) => {
     if (quantity < 1) return;
+    ensureClientLoaded();
     persistItems(
       getSnapshot().map((item) =>
         item.productId === productId ? { ...item, quantity } : item,
@@ -121,6 +138,7 @@ export function InquiryProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const clearItems = useCallback(() => {
+    ensureClientLoaded();
     persistItems([]);
   }, []);
 

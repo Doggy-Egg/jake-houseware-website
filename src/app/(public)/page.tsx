@@ -29,10 +29,10 @@ export default function HomePage() {
 
   return (
     <>
-      <section className="border-b border-border bg-muted-bg">
+      <section className="border-b border-gold/20 bg-muted-bg">
         <Container className="py-20 md:py-28">
           <div className="max-w-3xl">
-            <Badge variant="accent">B2B Wholesale Catalog</Badge>
+            <Badge variant="gold">B2B Wholesale Catalog</Badge>
             <h1 className="mt-6 text-4xl font-semibold tracking-tight text-foreground md:text-5xl md:leading-tight">
               Houseware products built for global trade partners
             </h1>
@@ -66,13 +66,13 @@ export default function HomePage() {
               <Link
                 key={category.slug}
                 href={`/products?category=${category.slug}`}
-                className="group flex items-center justify-between rounded-sm border border-border bg-surface px-5 py-4 transition-colors hover:border-accent/30 hover:bg-muted-bg"
+                className="group flex items-center justify-between rounded-sm border border-border border-l-4 border-l-gold/70 bg-surface px-5 py-4 transition-colors hover:border-gold hover:bg-gold-light/40"
               >
                 <span className="text-sm font-medium text-foreground">
                   {category.name}
                 </span>
                 <span
-                  className="text-muted transition-transform group-hover:translate-x-0.5 group-hover:text-accent"
+                  className="text-muted transition-transform group-hover:translate-x-0.5 group-hover:text-gold"
                   aria-hidden="true"
                 >
                   →
@@ -83,7 +83,7 @@ export default function HomePage() {
         </Container>
       </section>
 
-      <section className="border-y border-border bg-muted-bg py-16 md:py-20">
+      <section className="border-y border-gold/20 bg-muted-bg py-16 md:py-20">
         <Container>
           <SectionHeading
             eyebrow="Collections"
@@ -117,9 +117,12 @@ export default function HomePage() {
         </Container>
       </section>
 
-      <section className="border-t border-border bg-accent py-16 text-accent-foreground md:py-20">
+      <section className="border-t border-gold/20 bg-accent py-16 text-accent-foreground md:py-20">
         <Container className="text-center">
-          <h2 className="text-2xl font-semibold tracking-tight md:text-3xl">
+          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold">
+            Partner With Us
+          </p>
+          <h2 className="mt-3 text-2xl font-semibold tracking-tight md:text-3xl">
             Ready to discuss a wholesale partnership?
           </h2>
           <p className="mx-auto mt-4 max-w-xl text-base text-accent-foreground/80">
@@ -127,20 +130,10 @@ export default function HomePage() {
             responds to B2B requests within one business day.
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-4">
-            <Button
-              href="/inquiry"
-              variant="secondary"
-              size="lg"
-              className="bg-white text-accent hover:bg-white/90"
-            >
+            <Button href="/inquiry" variant="onDark" size="lg">
               View Inquiry List
             </Button>
-            <Button
-              href="/contact"
-              variant="outline"
-              size="lg"
-              className="border-white/30 text-white hover:bg-white/10"
-            >
+            <Button href="/contact" variant="onDarkOutline" size="lg">
               Contact Us
             </Button>
           </div>

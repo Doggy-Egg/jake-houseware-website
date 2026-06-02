@@ -24,10 +24,10 @@ export default function CatalogPage() {
 
   return (
     <>
-      <section className="border-b border-border bg-muted-bg">
+      <section className="border-b border-gold/20 bg-muted-bg">
         <Container as="main" className="py-16 md:py-20">
           <div className="max-w-3xl">
-            <Badge variant="accent">Wholesale Resources</Badge>
+            <Badge variant="gold">Wholesale Resources</Badge>
             <h1 className="mt-6 text-4xl font-semibold tracking-tight text-foreground md:text-5xl">
               Product Catalog
             </h1>

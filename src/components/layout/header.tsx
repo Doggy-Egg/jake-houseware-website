@@ -29,8 +29,8 @@ function NavLink({
       className={cn(
         "text-sm font-medium transition-colors",
         isActive
-          ? "text-accent"
-          : "text-foreground/80 hover:text-foreground",
+          ? "text-accent underline decoration-gold decoration-2 underline-offset-[6px]"
+          : "text-foreground/80 hover:text-accent",
       )}
     >
       {label}
@@ -78,7 +78,7 @@ export function Header() {
   }, [mobileOpen]);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-border bg-surface/95 backdrop-blur-sm">
+    <header className="sticky top-0 z-50 border-b-2 border-gold bg-surface/95 backdrop-blur-sm">
       <Container>
         <div className="flex h-16 items-center justify-between gap-6 md:h-[4.5rem]">
           <Logo height={32} className="md:hidden" />
@@ -133,7 +133,7 @@ export function Header() {
                   "rounded-sm px-3 py-3 text-sm font-medium transition-colors",
                   pathname === item.href ||
                     (item.href !== "/" && pathname.startsWith(item.href))
-                    ? "bg-muted-bg text-accent"
+                    ? "bg-accent-light text-accent"
                     : "text-foreground hover:bg-muted-bg",
                 )}
               >

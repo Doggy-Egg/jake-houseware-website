@@ -63,7 +63,7 @@ export default async function ProductDetailPage({
 
           <div className="mt-4 flex flex-wrap gap-2">
             {product.collectionSlugs.map((collectionSlug) => (
-              <Badge key={collectionSlug} variant="accent">
+              <Badge key={collectionSlug} variant="gold">
                 {getCollectionName(collectionSlug)}
               </Badge>
             ))}

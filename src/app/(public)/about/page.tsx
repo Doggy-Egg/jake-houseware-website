@@ -26,10 +26,10 @@ export default function AboutPage() {
   return (
     <>
       {/* Hero */}
-      <section className="border-b border-border bg-muted-bg">
+      <section className="border-b border-gold/20 bg-muted-bg">
         <Container as="main" className="py-16 md:py-24">
           <div className="max-w-3xl">
-            <Badge variant="accent">Our Company</Badge>
+            <Badge variant="gold">Our Company</Badge>
             <h1 className="mt-6 text-4xl font-semibold tracking-tight text-foreground md:text-5xl md:leading-tight">
               A trusted manufacturing partner for global houseware trade
             </h1>
@@ -183,7 +183,7 @@ export default function AboutPage() {
                     className="flex items-start gap-3 text-sm text-muted"
                   >
                     <span
-                      className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-accent"
+                      className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-gold"
                       aria-hidden="true"
                     />
                     {capability}
@@ -204,7 +204,7 @@ export default function AboutPage() {
                     key={cert}
                     className="flex items-start gap-3 rounded-sm border border-border bg-muted-bg px-4 py-3 text-sm font-medium text-foreground"
                   >
-                    <span className="text-accent" aria-hidden="true">
+                    <span className="text-gold" aria-hidden="true">
                       ✓
                     </span>
                     {cert}
@@ -217,9 +217,12 @@ export default function AboutPage() {
       </section>
 
       {/* CTA */}
-      <section className="border-t border-border bg-accent py-16 text-accent-foreground md:py-20">
+      <section className="border-t border-gold/20 bg-accent py-16 text-accent-foreground md:py-20">
         <Container className="text-center">
-          <h2 className="text-2xl font-semibold tracking-tight md:text-3xl">
+          <p className="text-xs font-medium uppercase tracking-widest text-gold">
+            Get Started
+          </p>
+          <h2 className="mt-3 text-2xl font-semibold tracking-tight md:text-3xl">
             Let&apos;s explore a partnership
           </h2>
           <p className="mx-auto mt-4 max-w-xl text-base text-accent-foreground/80">
@@ -227,20 +230,10 @@ export default function AboutPage() {
             team to discuss your sourcing requirements.
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-4">
-            <Button
-              href="/products"
-              variant="secondary"
-              size="lg"
-              className="bg-white text-accent hover:bg-white/90"
-            >
+            <Button href="/products" variant="onDark" size="lg">
               Browse Products
             </Button>
-            <Button
-              href="/contact"
-              variant="outline"
-              size="lg"
-              className="border-white/30 text-white hover:bg-white/10"
-            >
+            <Button href="/contact" variant="onDarkOutline" size="lg">
               Contact Us
             </Button>
           </div>
