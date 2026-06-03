@@ -24,8 +24,14 @@ const collectionDescriptions: Record<string, string> = {
   "new-arrivals": "Latest designs ready for your next season lineup.",
 };
 
-export default function HomePage() {
-  const categories = readCategories();
+export default async function HomePage() {
+  const categories = await readCategories();
+  const collectionProducts = await Promise.all(
+    collections.map(async (collection) => ({
+      collection,
+      products: await getProductsByCollection(collection.slug),
+    })),
+  );
 
   return (
     <>
@@ -91,8 +97,8 @@ export default function HomePage() {
             description="Curated selections for best sellers, new arrivals, and premium lines."
           />
           <div className="mt-10 grid gap-6 md:grid-cols-3">
-            {collections.map((collection) => {
-              const coverProduct = getProductsByCollection(collection.slug)[0];
+            {collectionProducts.map(({ collection, products }) => {
+              const coverProduct = products[0];
 
               return (
                 <Card

@@ -28,7 +28,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
   }
 
   try {
-    const product = updateProduct(id, body);
+    const product = await updateProduct(id, body);
     if (!product) {
       return NextResponse.json({ message: "Product not found." }, { status: 404 });
     }
@@ -45,7 +45,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
 
 export async function DELETE(_request: NextRequest, context: RouteContext) {
   const { id } = await context.params;
-  const deleted = deleteProduct(id);
+  const deleted = await deleteProduct(id);
 
   if (!deleted) {
     return NextResponse.json({ message: "Product not found." }, { status: 404 });

@@ -29,10 +29,10 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
   const category = params.category as ProductCategorySlug | undefined;
   const subCategory = params.subCategory as ProductSubCategorySlug | undefined;
   const query = params.q ?? null;
-  const categories = readCategories();
-  const subCategories = readSubCategoriesWithProducts();
+  const categories = await readCategories();
+  const subCategories = await readSubCategoriesWithProducts();
 
-  const products = filterProducts({
+  const products = await filterProducts({
     category: category ?? null,
     subCategory: subCategory ?? null,
     query,

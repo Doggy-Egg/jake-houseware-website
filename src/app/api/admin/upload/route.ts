@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import fs from "fs/promises";
-import path from "path";
 import { slugify } from "@/lib/utils/slug";
+import { createSupabaseAdmin } from "@/lib/supabase/server";
 
-const UPLOAD_DIR = path.join(process.cwd(), "public/images/products");
+const BUCKET = "product-images";
 const MAX_SIZE = 5 * 1024 * 1024;
 const ALLOWED_TYPES = new Map([
   ["image/jpeg", ".jpg"],
@@ -46,14 +45,24 @@ export async function POST(request: NextRequest) {
   );
   const extension = ALLOWED_TYPES.get(file.type)!;
   const fileName = `${originalBase}-${Date.now()}${extension}`;
-
-  await fs.mkdir(UPLOAD_DIR, { recursive: true });
-
   const buffer = Buffer.from(await file.arrayBuffer());
-  await fs.writeFile(path.join(UPLOAD_DIR, fileName), buffer);
+
+  const supabase = createSupabaseAdmin();
+  const { error } = await supabase.storage.from(BUCKET).upload(fileName, buffer, {
+    contentType: file.type,
+    upsert: false,
+  });
+
+  if (error) {
+    return NextResponse.json({ message: error.message }, { status: 500 });
+  }
+
+  const {
+    data: { publicUrl },
+  } = supabase.storage.from(BUCKET).getPublicUrl(fileName);
 
   return NextResponse.json({
-    url: `/images/products/${fileName}`,
+    url: publicUrl,
     fileName,
   });
 }

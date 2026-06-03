@@ -13,7 +13,7 @@ function revalidateProductPages() {
 }
 
 export async function GET() {
-  return NextResponse.json({ products: readProducts() });
+  return NextResponse.json({ products: await readProducts() });
 }
 
 export async function POST(request: NextRequest) {
@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const product = createProduct(body);
+    const product = await createProduct(body);
     revalidateProductPages();
     return NextResponse.json({ product }, { status: 201 });
   } catch (error) {

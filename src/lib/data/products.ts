@@ -1,5 +1,4 @@
 import type { CollectionSlug } from "@/lib/constants/collections";
-import { getCategoryName, getSubCategoryName } from "@/lib/data/taxonomy-queries";
 import type { Product } from "@/types/product";
 
 function img(slug: string, index = 0) {
@@ -322,5 +321,3 @@ export function getCollectionName(slug: CollectionSlug): string {
   };
   return names[slug];
 }
-
-export { getCategoryName, getSubCategoryName };

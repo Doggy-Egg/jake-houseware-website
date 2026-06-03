@@ -17,10 +17,10 @@ export const metadata: Metadata = {
     "Download the JAKE HOUSEWARE wholesale product catalog PDF. Browse wine, bar, coffee, and kitchen houseware products for B2B partners.",
 };
 
-export default function CatalogPage() {
+export default async function CatalogPage() {
   const downloadUrl = getCatalogDownloadUrl();
   const fileSize = getCatalogFileSize();
-  const categories = readCategories();
+  const categories = await readCategories();
 
   return (
     <>

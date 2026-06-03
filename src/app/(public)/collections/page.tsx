@@ -20,7 +20,14 @@ const collectionDescriptions: Record<string, string> = {
 
 export const dynamic = "force-dynamic";
 
-export default function CollectionsPage() {
+export default async function CollectionsPage() {
+  const collectionProducts = await Promise.all(
+    collections.map(async (collection) => ({
+      collection,
+      products: await getProductsByCollection(collection.slug),
+    })),
+  );
+
   return (
     <Container as="main" className="py-16 md:py-20">
       <SectionHeading
@@ -30,10 +37,9 @@ export default function CollectionsPage() {
       />
 
       <div className="mt-10 grid gap-6 md:grid-cols-3">
-        {collections.map((collection) => {
-          const collectionProducts = getProductsByCollection(collection.slug);
-          const count = collectionProducts.length;
-          const coverProduct = collectionProducts[0];
+        {collectionProducts.map(({ collection, products }) => {
+          const count = products.length;
+          const coverProduct = products[0];
 
           return (
             <Card

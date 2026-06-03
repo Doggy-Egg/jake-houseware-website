@@ -1,6 +1,12 @@
-import fs from "fs";
-import path from "path";
+import "server-only";
+
 import { products as seedProducts } from "@/lib/data/products";
+import {
+  mapProductRow,
+  toProductRow,
+  type ProductRow,
+} from "@/lib/supabase/mappers";
+import { createSupabaseAdmin } from "@/lib/supabase/server";
 import {
   generateProductId,
   normalizeItemNoKey,
@@ -10,11 +16,7 @@ import { normalizeProductStatus } from "@/lib/utils/product-visibility";
 import type { ProductCategorySlug } from "@/lib/constants/categories";
 import type { ProductSubCategorySlug } from "@/lib/constants/sub-categories";
 import type { CollectionSlug } from "@/lib/constants/collections";
-import { categoryExists, isSubCategoryValidForCategory } from "@/lib/data/taxonomy-queries";
 import type { Product, ProductStatus } from "@/types/product";
-
-const DATA_DIR = path.join(process.cwd(), "data");
-const PRODUCTS_FILE = path.join(DATA_DIR, "products.json");
 
 export class ProductStoreError extends Error {
   constructor(message: string) {
@@ -46,16 +48,6 @@ export type ProductInput = {
   status?: ProductStatus;
 };
 
-function ensureProductsFile() {
-  if (!fs.existsSync(DATA_DIR)) {
-    fs.mkdirSync(DATA_DIR, { recursive: true });
-  }
-
-  if (!fs.existsSync(PRODUCTS_FILE)) {
-    fs.writeFileSync(PRODUCTS_FILE, JSON.stringify(seedProducts, null, 2));
-  }
-}
-
 function normalizeProduct(product: Product): Product {
   const itemNo = product.itemNo.trim();
 
@@ -68,55 +60,66 @@ function normalizeProduct(product: Product): Product {
   };
 }
 
-export function readProducts(): Product[] {
-  ensureProductsFile();
-  const raw = fs.readFileSync(PRODUCTS_FILE, "utf-8");
-  const parsed = JSON.parse(raw) as Product[];
-  const products = Array.isArray(parsed) ? parsed : seedProducts;
-  return products.map(normalizeProduct);
-}
-
-function writeProducts(products: Product[]) {
-  ensureProductsFile();
-  fs.writeFileSync(PRODUCTS_FILE, JSON.stringify(products, null, 2));
-}
-
 function optionalString(value: string | undefined) {
   const trimmed = value?.trim();
   return trimmed || undefined;
 }
 
-function assertUniqueItemNo(
-  products: Product[],
-  itemNo: string,
-  excludeId?: string,
-) {
+async function categoryExists(slug: string): Promise<boolean> {
+  const supabase = createSupabaseAdmin();
+  const { data, error } = await supabase
+    .from("categories")
+    .select("slug")
+    .eq("slug", slug)
+    .maybeSingle();
+
+  return !error && !!data;
+}
+
+async function isSubCategoryValidForCategory(
+  categorySlug: string,
+  subCategorySlug: string,
+): Promise<boolean> {
+  const supabase = createSupabaseAdmin();
+  const { data, error } = await supabase
+    .from("sub_categories")
+    .select("slug")
+    .eq("slug", subCategorySlug)
+    .eq("category_slug", categorySlug)
+    .maybeSingle();
+
+  return !error && !!data;
+}
+
+async function assertUniqueItemNo(itemNo: string, excludeId?: string) {
   const key = normalizeItemNoKey(itemNo);
   if (!key) {
     throw new ProductStoreError("Item No. is required.");
   }
 
-  const conflict = products.find(
-    (product) =>
-      product.id !== excludeId && normalizeItemNoKey(product.itemNo) === key,
-  );
-
-  if (conflict) {
+  const taken = await isItemNoTaken(itemNo, excludeId);
+  if (taken) {
     throw new ProductStoreError(
       `Item No. "${itemNo.trim()}" is already used by another product.`,
     );
   }
 }
 
-function buildProduct(input: ProductInput, existing?: Product): Product {
+async function buildProduct(
+  input: ProductInput,
+  existing?: Product,
+): Promise<Product> {
   const now = new Date().toISOString();
   const itemNo = input.itemNo.trim();
   const images = input.images.filter(Boolean);
   const thumbnail = input.thumbnail?.trim() || images[0] || undefined;
   const subCategorySlug =
     input.subCategorySlug &&
-    categoryExists(input.categorySlug) &&
-    isSubCategoryValidForCategory(input.categorySlug, input.subCategorySlug)
+    (await categoryExists(input.categorySlug)) &&
+    (await isSubCategoryValidForCategory(
+      input.categorySlug,
+      input.subCategorySlug,
+    ))
       ? input.subCategorySlug
       : undefined;
   const id = existing?.id ?? generateProductId();
@@ -151,45 +154,152 @@ function buildProduct(input: ProductInput, existing?: Product): Product {
   };
 }
 
-export function createProduct(input: ProductInput): Product {
-  const products = readProducts();
-  assertUniqueItemNo(products, input.itemNo);
-  const product = buildProduct(input);
-  writeProducts([product, ...products]);
+export async function readProducts(): Promise<Product[]> {
+  const supabase = createSupabaseAdmin();
+  const { data, error } = await supabase
+    .from("products")
+    .select("*")
+    .order("name", { ascending: true });
+
+  if (error) {
+    throw new ProductStoreError(error.message);
+  }
+
+  return ((data ?? []) as ProductRow[]).map(mapProductRow).map(normalizeProduct);
+}
+
+export async function createProduct(input: ProductInput): Promise<Product> {
+  await assertUniqueItemNo(input.itemNo);
+  const product = normalizeProduct(await buildProduct(input));
+  const supabase = createSupabaseAdmin();
+  const { error } = await supabase.from("products").insert(toProductRow(product));
+
+  if (error) {
+    throw new ProductStoreError(error.message);
+  }
+
   return product;
 }
 
-export function updateProduct(id: string, input: ProductInput): Product | null {
-  const products = readProducts();
-  const existing = products.find((product) => product.id === id);
-  if (!existing) return null;
+export async function updateProduct(
+  id: string,
+  input: ProductInput,
+): Promise<Product | null> {
+  const supabase = createSupabaseAdmin();
+  const { data: existingRow, error: readError } = await supabase
+    .from("products")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
 
-  assertUniqueItemNo(products, input.itemNo, id);
-  const updated = buildProduct(input, existing);
-  writeProducts(
-    products.map((product) => (product.id === id ? updated : product)),
-  );
+  if (readError) {
+    throw new ProductStoreError(readError.message);
+  }
+
+  if (!existingRow) {
+    return null;
+  }
+
+  const existing = normalizeProduct(mapProductRow(existingRow as ProductRow));
+  await assertUniqueItemNo(input.itemNo, id);
+  const updated = normalizeProduct(await buildProduct(input, existing));
+  const { error } = await supabase
+    .from("products")
+    .update(toProductRow(updated))
+    .eq("id", id);
+
+  if (error) {
+    throw new ProductStoreError(error.message);
+  }
+
   return updated;
 }
 
-export function deleteProduct(id: string): boolean {
-  const products = readProducts();
-  const next = products.filter((product) => product.id !== id);
-  if (next.length === products.length) return false;
-  writeProducts(next);
-  return true;
+export async function deleteProduct(id: string): Promise<boolean> {
+  const supabase = createSupabaseAdmin();
+  const { data, error } = await supabase
+    .from("products")
+    .delete()
+    .eq("id", id)
+    .select("id");
+
+  if (error) {
+    throw new ProductStoreError(error.message);
+  }
+
+  return (data?.length ?? 0) > 0;
 }
 
-export function resetProductsToSeed() {
-  writeProducts(structuredClone(seedProducts));
+export async function resetProductsToSeed() {
+  const supabase = createSupabaseAdmin();
+  const rows = structuredClone(seedProducts).map((product) =>
+    toProductRow(normalizeProduct(product)),
+  );
+  const { error } = await supabase.from("products").upsert(rows, { onConflict: "id" });
+
+  if (error) {
+    throw new ProductStoreError(error.message);
+  }
 }
 
-export function isItemNoTaken(itemNo: string, excludeId?: string): boolean {
+export async function isItemNoTaken(
+  itemNo: string,
+  excludeId?: string,
+): Promise<boolean> {
   const key = normalizeItemNoKey(itemNo);
   if (!key) return false;
 
-  return readProducts().some(
+  const products = await readProducts();
+  return products.some(
     (product) =>
       product.id !== excludeId && normalizeItemNoKey(product.itemNo) === key,
   );
+}
+
+export async function migrateProductsCategorySlug(
+  oldSlug: string,
+  newSlug: string,
+) {
+  const supabase = createSupabaseAdmin();
+  const now = new Date().toISOString();
+  const { error } = await supabase
+    .from("products")
+    .update({ category_slug: newSlug, updated_at: now })
+    .eq("category_slug", oldSlug);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+}
+
+export async function migrateProductsSubCategorySlug(
+  oldSlug: string,
+  newSlug: string,
+) {
+  const supabase = createSupabaseAdmin();
+  const now = new Date().toISOString();
+  const { error } = await supabase
+    .from("products")
+    .update({ sub_category_slug: newSlug, updated_at: now })
+    .eq("sub_category_slug", oldSlug);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+}
+
+export async function migrateProductsToCategory(
+  subCategorySlug: string,
+  categorySlug: string,
+) {
+  const supabase = createSupabaseAdmin();
+  const now = new Date().toISOString();
+  const { error } = await supabase
+    .from("products")
+    .update({ category_slug: categorySlug, updated_at: now })
+    .eq("sub_category_slug", subCategorySlug);
+
+  if (error) {
+    throw new Error(error.message);
+  }
 }

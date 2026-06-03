@@ -20,7 +20,7 @@ export async function generateMetadata({
   params,
 }: ProductDetailPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const product = getProductBySlug(slug);
+  const product = await getProductBySlug(slug);
   if (!product) return { title: "Product Not Found" };
   return buildProductMetadata(product);
 }
@@ -29,11 +29,11 @@ export default async function ProductDetailPage({
   params,
 }: ProductDetailPageProps) {
   const { slug } = await params;
-  const product = getProductBySlug(slug);
+  const product = await getProductBySlug(slug);
 
   if (!product) notFound();
 
-  const jsonLd = buildProductJsonLd(product);
+  const jsonLd = await buildProductJsonLd(product);
 
   return (
     <Container as="main" className="py-16 md:py-20">
@@ -103,8 +103,9 @@ export default async function ProductDetailPage({
   );
 }
 
-export function generateStaticParams() {
-  return getAllProductSlugs().map((slug) => ({ slug }));
+export async function generateStaticParams() {
+  const slugs = await getAllProductSlugs();
+  return slugs.map((slug) => ({ slug }));
 }
 
 function SpecRow({ label, value }: { label: string; value: string }) {

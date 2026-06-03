@@ -8,12 +8,12 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-export default function AdminProtectedLayout({
+export default async function AdminProtectedLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const products = readProducts();
+  const products = await readProducts();
 
   return (
     <AdminProductsProvider initialProducts={products}>

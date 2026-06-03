@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ message: "Category name is required." }, { status: 400 });
   }
 
-  const category = createCategory({
+  const category = await createCategory({
     name: body.name,
     slug: body.slug,
   });

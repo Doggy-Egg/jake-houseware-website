@@ -4,8 +4,8 @@ import { getCategoryUsage } from "@/lib/data/taxonomy-store";
 
 export const dynamic = "force-dynamic";
 
-export default function AdminCategoriesPage() {
-  const categories = getCategoryUsage();
+export default async function AdminCategoriesPage() {
+  const categories = await getCategoryUsage();
 
   return (
     <Container className="py-8 md:py-10">

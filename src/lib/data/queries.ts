@@ -1,45 +1,49 @@
+import type { Product } from "@/types/product";
+import { readProducts } from "@/lib/data/product-store";
+import { isProductPubliclyVisible } from "@/lib/utils/product-visibility";
 import type { ProductCategorySlug } from "@/lib/constants/categories";
 import type { ProductSubCategorySlug } from "@/lib/constants/sub-categories";
 import type { CollectionSlug } from "@/lib/constants/collections";
-import { readProducts } from "@/lib/data/product-store";
-import { isProductPubliclyVisible } from "@/lib/utils/product-visibility";
-import type { Product } from "@/types/product";
 
 function sortProducts(products: Product[]): Product[] {
   return [...products].sort((a, b) => a.name.localeCompare(b.name));
 }
 
-function getPublicProducts(): Product[] {
-  return sortProducts(readProducts().filter(isProductPubliclyVisible));
+async function getPublicProducts(): Promise<Product[]> {
+  return sortProducts(
+    (await readProducts()).filter(isProductPubliclyVisible),
+  );
 }
 
 /** All products including draft/inactive — for Admin. */
-export function getAllProducts(): Product[] {
-  return sortProducts(readProducts());
+export async function getAllProducts(): Promise<Product[]> {
+  return sortProducts(await readProducts());
 }
 
-export function getProductBySlug(slug: string): Product | undefined {
-  return getPublicProducts().find((product) => product.slug === slug);
+export async function getProductBySlug(
+  slug: string,
+): Promise<Product | undefined> {
+  return (await getPublicProducts()).find((product) => product.slug === slug);
 }
 
-export function getProductsByCategory(
+export async function getProductsByCategory(
   categorySlug: ProductCategorySlug,
-): Product[] {
-  return getPublicProducts().filter(
+): Promise<Product[]> {
+  return (await getPublicProducts()).filter(
     (product) => product.categorySlug === categorySlug,
   );
 }
 
-export function getProductsByCollection(
+export async function getProductsByCollection(
   collectionSlug: CollectionSlug,
-): Product[] {
-  return getPublicProducts().filter((product) =>
+): Promise<Product[]> {
+  return (await getPublicProducts()).filter((product) =>
     product.collectionSlugs.includes(collectionSlug),
   );
 }
 
-export function searchProducts(query: string): Product[] {
-  const products = getPublicProducts();
+export async function searchProducts(query: string): Promise<Product[]> {
+  const products = await getPublicProducts();
   const normalized = query.trim().toLowerCase();
   if (!normalized) return products;
 
@@ -54,13 +58,13 @@ export function searchProducts(query: string): Product[] {
   );
 }
 
-export function filterProducts(options: {
+export async function filterProducts(options: {
   category?: ProductCategorySlug | null;
   subCategory?: ProductSubCategorySlug | null;
   collection?: CollectionSlug | null;
   query?: string | null;
-}): Product[] {
-  let result = getPublicProducts();
+}): Promise<Product[]> {
+  let result = await getPublicProducts();
 
   if (options.category) {
     result = result.filter(
@@ -96,12 +100,12 @@ export function filterProducts(options: {
   return result;
 }
 
-export function getAllProductSlugs(): string[] {
-  return getPublicProducts()
+export async function getAllProductSlugs(): Promise<string[]> {
+  return (await getPublicProducts())
     .map((product) => product.slug)
     .filter(Boolean);
 }
 
-export function getProductById(id: string): Product | undefined {
-  return readProducts().find((product) => product.id === id);
+export async function getProductById(id: string): Promise<Product | undefined> {
+  return (await readProducts()).find((product) => product.id === id);
 }

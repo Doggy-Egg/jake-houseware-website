@@ -25,7 +25,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
     return NextResponse.json({ message: "Invalid JSON payload." }, { status: 400 });
   }
 
-  const subCategory = updateSubCategory(slug, body);
+  const subCategory = await updateSubCategory(slug, body);
   if (!subCategory) {
     return NextResponse.json({ message: "Sub-category not found." }, { status: 404 });
   }
@@ -36,7 +36,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
 
 export async function DELETE(_request: NextRequest, context: RouteContext) {
   const { slug } = await context.params;
-  const result = deleteSubCategory(slug);
+  const result = await deleteSubCategory(slug);
 
   if (!result.ok) {
     return NextResponse.json({ message: result.reason }, { status: 409 });

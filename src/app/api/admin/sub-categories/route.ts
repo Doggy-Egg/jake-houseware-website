@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const subCategory = createSubCategory({
+  const subCategory = await createSubCategory({
     name: body.name,
     slug: body.slug,
     categorySlug: body.categorySlug,

@@ -20,8 +20,8 @@ export const metadata: Metadata = {
     "Learn about JAKE HOUSEWARE — a B2B houseware manufacturer serving importers, wholesalers, and retailers worldwide with wine, bar, coffee, and kitchen products.",
 };
 
-export default function AboutPage() {
-  const categories = readCategories();
+export default async function AboutPage() {
+  const categories = await readCategories();
 
   return (
     <>

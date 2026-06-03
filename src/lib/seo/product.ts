@@ -1,13 +1,14 @@
 import type { Metadata } from "next";
 import type { Product } from "@/types/product";
 import { siteConfig } from "@/lib/constants/site";
-import { getCategoryName } from "@/lib/data/products";
+import { getCategoryName } from "@/lib/data/taxonomy-queries";
 import { getProductPrimaryImage } from "@/lib/utils/product-image";
 
-export function buildProductMetadata(product: Product): Metadata {
+export async function buildProductMetadata(product: Product): Promise<Metadata> {
+  const categoryName = await getCategoryName(product.categorySlug);
   const description =
     product.description ??
-    `${product.name} — wholesale ${getCategoryName(product.categorySlug)} from ${siteConfig.name}.`;
+    `${product.name} — wholesale ${categoryName} from ${siteConfig.name}.`;
 
   const primaryImage = getProductPrimaryImage(product);
 
@@ -24,7 +25,7 @@ export function buildProductMetadata(product: Product): Metadata {
   };
 }
 
-export function buildProductJsonLd(product: Product) {
+export async function buildProductJsonLd(product: Product) {
   return {
     "@context": "https://schema.org",
     "@type": "Product",
@@ -36,6 +37,6 @@ export function buildProductJsonLd(product: Product) {
       "@type": "Brand",
       name: siteConfig.name,
     },
-    category: getCategoryName(product.categorySlug),
+    category: await getCategoryName(product.categorySlug),
   };
 }

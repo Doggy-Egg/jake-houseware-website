@@ -7,69 +7,86 @@ import {
 export type ProductCategorySlug = string;
 export type ProductSubCategorySlug = string;
 
-export function readCategories() {
-  return readTaxonomy()
+export async function readCategories() {
+  return (await readTaxonomy())
     .categories.slice()
     .sort((a, b) => a.sortOrder - b.sortOrder);
 }
 
-export function readSubCategories(categorySlug?: string) {
-  const subCategories = readTaxonomy()
+export async function readSubCategories(categorySlug?: string) {
+  const subCategories = (await readTaxonomy())
     .subCategories.slice()
     .sort((a, b) => a.sortOrder - b.sortOrder);
+
   if (!categorySlug) return subCategories;
+
   return subCategories.filter(
     (subCategory) => subCategory.categorySlug === categorySlug,
   );
 }
 
-export function readSubCategoriesWithProducts(categorySlug?: string) {
-  return readSubCategories(categorySlug).filter(
-    (subCategory) => countProductsBySubCategory(subCategory.slug) > 0,
+export async function readSubCategoriesWithProducts(categorySlug?: string) {
+  const subCategories = await readSubCategories(categorySlug);
+  const withCounts = await Promise.all(
+    subCategories.map(async (subCategory) => ({
+      subCategory,
+      productCount: await countProductsBySubCategory(subCategory.slug),
+    })),
+  );
+
+  return withCounts
+    .filter((entry) => entry.productCount > 0)
+    .map((entry) => entry.subCategory);
+}
+
+export async function getCategoryName(slug: string): Promise<string> {
+  return (
+    (await readCategories()).find((category) => category.slug === slug)?.name ??
+    slug
   );
 }
 
-export function getCategoryName(slug: string): string {
-  return readCategories().find((category) => category.slug === slug)?.name ?? slug;
-}
-
-export function getSubCategoryName(
+export async function getSubCategoryName(
   subCategorySlug: string | undefined,
-): string | undefined {
+): Promise<string | undefined> {
   if (!subCategorySlug) return undefined;
+
   return (
-    readTaxonomy().subCategories.find(
+    (await readTaxonomy()).subCategories.find(
       (subCategory) => subCategory.slug === subCategorySlug,
     )?.name ?? subCategorySlug
   );
 }
 
-export function getSubCategoriesForCategory(categorySlug: string) {
-  return readSubCategories(categorySlug).map(({ slug, name }) => ({ slug, name }));
+export async function getSubCategoriesForCategory(categorySlug: string) {
+  return (await readSubCategories(categorySlug)).map(({ slug, name }) => ({
+    slug,
+    name,
+  }));
 }
 
-export function getSubCategoryCategory(
+export async function getSubCategoryCategory(
   subCategorySlug: string,
-): string | undefined {
-  return readTaxonomy().subCategories.find(
+): Promise<string | undefined> {
+  return (await readTaxonomy()).subCategories.find(
     (subCategory) => subCategory.slug === subCategorySlug,
   )?.categorySlug;
 }
 
-export function isSubCategoryValidForCategory(
+export async function isSubCategoryValidForCategory(
   categorySlug: string,
   subCategorySlug: string | undefined,
-): boolean {
+): Promise<boolean> {
   if (!subCategorySlug) return true;
-  return getSubCategoryCategory(subCategorySlug) === categorySlug;
+  return (await getSubCategoryCategory(subCategorySlug)) === categorySlug;
 }
 
-export function categoryExists(slug: string): boolean {
-  return readCategories().some((category) => category.slug === slug);
+export async function categoryExists(slug: string): Promise<boolean> {
+  return (await readCategories()).some((category) => category.slug === slug);
 }
 
-export function subCategoryExists(slug: string): boolean {
-  return readTaxonomy().subCategories.some(
+export async function subCategoryExists(slug: string): Promise<boolean> {
+  return (await readTaxonomy()).subCategories.some(
     (subCategory) => subCategory.slug === slug,
   );
 }

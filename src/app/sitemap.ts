@@ -2,8 +2,8 @@ import type { MetadataRoute } from "next";
 import { siteConfig } from "@/lib/constants/site";
 import { getAllProductSlugs } from "@/lib/data/queries";
 
-export default function sitemap(): MetadataRoute.Sitemap {
-  const productEntries = getAllProductSlugs().map((slug) => ({
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const productEntries = (await getAllProductSlugs()).map((slug) => ({
     url: `${siteConfig.url}/products/${slug}`,
     lastModified: new Date(),
     changeFrequency: "monthly" as const,

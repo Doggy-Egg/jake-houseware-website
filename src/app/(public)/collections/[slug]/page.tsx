@@ -42,7 +42,7 @@ export default async function CollectionDetailPage({
 
   if (!collection) notFound();
 
-  const products = getProductsByCollection(collection.slug);
+  const products = await getProductsByCollection(collection.slug);
 
   return (
     <Container as="main" className="py-16 md:py-20">
