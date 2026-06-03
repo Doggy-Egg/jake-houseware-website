@@ -1,6 +1,5 @@
 import "server-only";
 
-import { taxonomySeed } from "@/lib/data/taxonomy-seed";
 import {
   migrateProductsCategorySlug,
   migrateProductsSubCategorySlug,
@@ -63,10 +62,6 @@ export async function readTaxonomy(): Promise<Taxonomy> {
   const subCategories = ((subCategoriesResult.data ?? []) as SubCategoryRow[]).map(
     mapSubCategoryRow,
   );
-
-  if (categories.length === 0 && subCategories.length === 0) {
-    return structuredClone(taxonomySeed);
-  }
 
   return { categories, subCategories };
 }

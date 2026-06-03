@@ -131,7 +131,7 @@ export function AdminDashboardContent() {
       </div>
 
       <div className="rounded-sm border border-dashed border-border bg-surface px-5 py-4 text-sm text-muted">
-        产品数据保存在 data/products.json，Admin 修改会同步到前台网站。
+        产品数据保存在 Supabase，Admin 修改会同步到前台网站。
       </div>
     </div>
   );

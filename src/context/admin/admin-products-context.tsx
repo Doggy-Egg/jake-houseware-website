@@ -4,6 +4,7 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
 } from "react";
@@ -60,6 +61,10 @@ export function AdminProductsProvider({
       setIsLoading(false);
     }
   }, []);
+
+  useEffect(() => {
+    void refreshProducts();
+  }, [refreshProducts]);
 
   const getProductById = useCallback(
     (id: string) => products.find((product) => product.id === id),
