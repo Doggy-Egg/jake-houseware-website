@@ -7,7 +7,11 @@ import { useAdminProducts } from "@/context/admin/admin-products-context";
 import { adminCopy, productStatusLabels } from "@/lib/constants/admin";
 import type { ProductCategorySlug } from "@/lib/constants/categories";
 import type { ProductSubCategorySlug } from "@/lib/constants/sub-categories";
-import { parseItemNoFromFilename } from "@/lib/utils/item-no";
+import {
+  isAutoItemNoFilename,
+  parseItemNoFromFilename,
+  resolveBulkUploadItemNo,
+} from "@/lib/utils/item-no";
 import type { ProductStatus } from "@/types/product";
 
 type TaxonomyCategory = { slug: string; name: string };
@@ -25,6 +29,22 @@ type ImportResult = {
   action?: "created" | "updated" | "skipped";
 };
 
+type FileEntry = {
+  key: string;
+  file: File;
+  autoItemNo: string;
+  manualItemNo: string;
+  needsManual: boolean;
+};
+
+function fileKey(file: File) {
+  return `${file.name}-${file.size}-${file.lastModified}`;
+}
+
+function resolveEntryItemNo(entry: FileEntry) {
+  return resolveBulkUploadItemNo(entry.file.name, entry.manualItemNo);
+}
+
 export function BulkProductUploadForm() {
   const { refreshProducts } = useAdminProducts();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -36,9 +56,10 @@ export function BulkProductUploadForm() {
   >("");
   const [status, setStatus] = useState<ProductStatus>("draft");
   const [updateExisting, setUpdateExisting] = useState(true);
-  const [files, setFiles] = useState<File[]>([]);
+  const [fileEntries, setFileEntries] = useState<FileEntry[]>([]);
   const [uploading, setUploading] = useState(false);
   const [results, setResults] = useState<ImportResult[]>([]);
+  const [formError, setFormError] = useState("");
 
   useEffect(() => {
     void fetch("/api/taxonomy")
@@ -65,39 +86,71 @@ export function BulkProductUploadForm() {
     [subCategories, categorySlug],
   );
 
-  const previewRows = useMemo(
-    () =>
-      files.map((file) => ({
-        fileName: file.name,
-        itemNo: parseItemNoFromFilename(file.name),
-      })),
-    [files],
+  const missingItemNoCount = useMemo(
+    () => fileEntries.filter((entry) => !resolveEntryItemNo(entry)).length,
+    [fileEntries],
   );
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const selected = event.target.files ? Array.from(event.target.files) : [];
-    setFiles(selected);
+
+    setFileEntries((previous) => {
+      const previousByKey = new Map(previous.map((entry) => [entry.key, entry]));
+
+      return selected.map((file) => {
+        const key = fileKey(file);
+        const existing = previousByKey.get(key);
+        const needsManual = !isAutoItemNoFilename(file.name);
+
+        return {
+          key,
+          file,
+          autoItemNo: parseItemNoFromFilename(file.name),
+          manualItemNo: existing?.manualItemNo ?? "",
+          needsManual,
+        };
+      });
+    });
+
     setResults([]);
+    setFormError("");
+  };
+
+  const updateManualItemNo = (key: string, manualItemNo: string) => {
+    setFileEntries((previous) =>
+      previous.map((entry) =>
+        entry.key === key ? { ...entry, manualItemNo } : entry,
+      ),
+    );
+    setFormError("");
   };
 
   const handleUpload = async () => {
-    if (!categorySlug || files.length === 0) return;
+    if (!categorySlug || fileEntries.length === 0) return;
 
+    const unresolved = fileEntries.filter((entry) => !resolveEntryItemNo(entry));
+    if (unresolved.length > 0) {
+      setFormError(`还有 ${unresolved.length} 个文件未填写 Item No.`);
+      return;
+    }
+
+    setFormError("");
     setUploading(true);
     setResults(
-      files.map((file) => ({
-        fileName: file.name,
-        itemNo: parseItemNoFromFilename(file.name),
+      fileEntries.map((entry) => ({
+        fileName: entry.file.name,
+        itemNo: resolveEntryItemNo(entry),
         status: "pending",
       })),
     );
 
     const nextResults: ImportResult[] = [];
 
-    for (const file of files) {
-      const itemNo = parseItemNoFromFilename(file.name);
+    for (const entry of fileEntries) {
+      const itemNo = resolveEntryItemNo(entry);
       const formData = new FormData();
-      formData.append("file", file);
+      formData.append("file", entry.file);
+      formData.append("itemNo", itemNo);
       formData.append("categorySlug", categorySlug);
       if (subCategorySlug) {
         formData.append("subCategorySlug", subCategorySlug);
@@ -118,14 +171,14 @@ export function BulkProductUploadForm() {
 
         if (!response.ok) {
           nextResults.push({
-            fileName: file.name,
+            fileName: entry.file.name,
             itemNo,
             status: "error",
             message: data.message ?? "导入失败",
           });
         } else if (data.action === "skipped") {
           nextResults.push({
-            fileName: file.name,
+            fileName: entry.file.name,
             itemNo: data.itemNo ?? itemNo,
             status: "skipped",
             action: "skipped",
@@ -133,7 +186,7 @@ export function BulkProductUploadForm() {
           });
         } else {
           nextResults.push({
-            fileName: file.name,
+            fileName: entry.file.name,
             itemNo: data.itemNo ?? itemNo,
             status: "success",
             action: data.action,
@@ -141,7 +194,7 @@ export function BulkProductUploadForm() {
         }
       } catch {
         nextResults.push({
-          fileName: file.name,
+          fileName: entry.file.name,
           itemNo,
           status: "error",
           message: "网络错误",
@@ -165,7 +218,8 @@ export function BulkProductUploadForm() {
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">批量上传产品图片</h1>
           <p className="mt-1 text-sm text-muted">
-            图片文件名即为 Item No.（如 <code>JH-BW-001.jpg</code>）。产品名称可稍后在编辑页补充。
+            文件名以 <code>JK</code> 或 <code>JH</code> 开头时，自动识别为 Item No.（如{" "}
+            <code>JK-803.jpg</code>）。其他文件名需在下表手动填写货号。
           </p>
         </div>
         <Button href="/admin/products" variant="outline">
@@ -285,23 +339,38 @@ export function BulkProductUploadForm() {
             <Button
               type="button"
               onClick={handleUpload}
-              disabled={uploading || !categorySlug || files.length === 0}
+              disabled={
+                uploading ||
+                !categorySlug ||
+                fileEntries.length === 0 ||
+                missingItemNoCount > 0
+              }
             >
               {uploading
-                ? `上传中 (${results.length}/${files.length})...`
-                : `开始导入 (${files.length})`}
+                ? `上传中 (${results.length}/${fileEntries.length})...`
+                : `开始导入 (${fileEntries.length})`}
             </Button>
           </div>
           <p className="text-xs text-muted">
             支持 JPG、PNG、WebP、GIF，单张最大 5MB。图片上传至 Supabase Storage。
           </p>
+          {formError ? (
+            <p className="text-sm text-red-600" role="alert">
+              {formError}
+            </p>
+          ) : null}
+          {missingItemNoCount > 0 ? (
+            <p className="text-sm text-amber-700">
+              还有 {missingItemNoCount} 个文件需要手动填写 Item No.
+            </p>
+          ) : null}
         </div>
       </div>
 
-      {previewRows.length > 0 ? (
+      {fileEntries.length > 0 ? (
         <section className="space-y-3">
           <h2 className="text-sm font-semibold uppercase tracking-widest text-muted">
-            待导入 ({previewRows.length})
+            待导入 ({fileEntries.length})
           </h2>
           <div className="overflow-hidden rounded-sm border border-border bg-surface">
             <table className="min-w-full text-left text-sm">
@@ -312,16 +381,40 @@ export function BulkProductUploadForm() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                {previewRows.map((row) => (
-                  <tr key={row.fileName}>
-                    <td className="px-5 py-3">{row.fileName}</td>
-                    <td className="px-5 py-3 font-medium">
-                      {row.itemNo || (
-                        <span className="text-red-600">无法解析</span>
-                      )}
-                    </td>
-                  </tr>
-                ))}
+                {fileEntries.map((entry) => {
+                  const resolvedItemNo = resolveEntryItemNo(entry);
+
+                  return (
+                    <tr key={entry.key}>
+                      <td className="px-5 py-3">{entry.file.name}</td>
+                      <td className="px-5 py-3">
+                        {entry.needsManual ? (
+                          <div className="space-y-1">
+                            <input
+                              type="text"
+                              value={entry.manualItemNo}
+                              onChange={(event) =>
+                                updateManualItemNo(entry.key, event.target.value)
+                              }
+                              placeholder="手动填写货号，如 JK-803"
+                              className="h-10 w-full max-w-xs rounded-sm border border-amber-300 bg-amber-50/50 px-3 text-sm focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
+                            />
+                            {!resolvedItemNo ? (
+                              <p className="text-xs text-amber-700">
+                                文件名不是 JK/JH 开头，需手动填写
+                              </p>
+                            ) : null}
+                          </div>
+                        ) : (
+                          <div>
+                            <span className="font-medium">{entry.autoItemNo}</span>
+                            <p className="mt-0.5 text-xs text-muted">来自文件名</p>
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

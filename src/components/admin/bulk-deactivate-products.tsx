@@ -73,7 +73,7 @@ export function BulkDeactivateProductsForm() {
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">批量无效化产品</h1>
           <p className="mt-1 text-sm text-muted">
-            勾选产品图片后批量下架。前台不可见，数据仍保留，可在编辑页恢复。
+            先选择 Category 和 Sub-category，再勾选产品图片批量下架。前台不可见，数据仍保留，可在编辑页恢复。
           </p>
         </div>
         <Button href="/admin/products" variant="outline">
@@ -86,6 +86,7 @@ export function BulkDeactivateProductsForm() {
           products={products}
           selectedIds={selectedIds}
           onSelectedIdsChange={setSelectedIds}
+          requireCategory
         />
 
         <div className="flex flex-wrap items-center gap-3 border-t border-border pt-6">

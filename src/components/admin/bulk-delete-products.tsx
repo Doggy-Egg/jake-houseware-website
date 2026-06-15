@@ -72,7 +72,7 @@ export function BulkDeleteProductsForm() {
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">批量删除产品</h1>
           <p className="mt-1 text-sm text-muted">
-            勾选产品后永久删除。产品信息、图片及 Storage 文件将全部移除，不可恢复。
+            先选择 Category 和 Sub-category，再勾选产品永久删除。产品信息、图片及 Storage 文件将全部移除，不可恢复。
           </p>
         </div>
         <Button href="/admin/products" variant="outline">
@@ -85,6 +85,7 @@ export function BulkDeleteProductsForm() {
           products={products}
           selectedIds={selectedIds}
           onSelectedIdsChange={setSelectedIds}
+          requireCategory
         />
 
         <div className="flex flex-wrap items-center gap-3 border-t border-border pt-6">

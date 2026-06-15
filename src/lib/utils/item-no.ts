@@ -3,6 +3,29 @@ export function parseItemNoFromFilename(filename: string): string {
   return filename.replace(/\.[^.]+$/i, "").trim();
 }
 
+/** Filenames that look like a product Item No. (JK / JH prefix). */
+export function isAutoItemNoFilename(filename: string): boolean {
+  const base = parseItemNoFromFilename(filename);
+  return /^(JK|JH)/i.test(base);
+}
+
+/** Resolve Item No. from filename, with optional manual override. */
+export function resolveBulkUploadItemNo(
+  filename: string,
+  manualItemNo?: string,
+): string {
+  const manual = manualItemNo?.trim();
+  if (manual) {
+    return manual;
+  }
+
+  if (isAutoItemNoFilename(filename)) {
+    return parseItemNoFromFilename(filename);
+  }
+
+  return "";
+}
+
 /** Parse pasted Item No. list (one per line, or comma-separated). */
 export function parseItemNoList(text: string): string[] {
   const seen = new Set<string>();

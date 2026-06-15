@@ -3,7 +3,7 @@ import { revalidatePath } from "next/cache";
 import { upsertProductImageByItemNo } from "@/lib/data/product-store";
 import { categoryExists } from "@/lib/data/taxonomy-queries";
 import { uploadProductImage } from "@/lib/supabase/product-images";
-import { parseItemNoFromFilename } from "@/lib/utils/item-no";
+import { resolveBulkUploadItemNo, isAutoItemNoFilename } from "@/lib/utils/item-no";
 import type { ProductCategorySlug } from "@/lib/constants/categories";
 import type { ProductSubCategorySlug } from "@/lib/constants/sub-categories";
 import type { ProductStatus } from "@/types/product";
@@ -41,10 +41,15 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ message: "Category 不存在" }, { status: 400 });
   }
 
-  const itemNo = parseItemNoFromFilename(file.name);
+  const itemNoFromForm = String(formData.get("itemNo") ?? "").trim();
+  const itemNo = resolveBulkUploadItemNo(file.name, itemNoFromForm);
   if (!itemNo) {
     return NextResponse.json(
-      { message: "无法从文件名解析 Item No." },
+      {
+        message: isAutoItemNoFilename(file.name)
+          ? "请填写 Item No."
+          : "文件名不是 JK/JH 开头的货号，请手动填写 Item No.",
+      },
       { status: 400 },
     );
   }
