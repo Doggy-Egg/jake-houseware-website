@@ -1,12 +1,12 @@
-import { BulkDeleteImagesForm } from "@/components/admin/bulk-delete-images";
+import { BulkDeleteProductsForm } from "@/components/admin/bulk-delete-products";
 import { Container } from "@/components/ui/container";
 
 export const dynamic = "force-dynamic";
 
-export default function BulkDeleteImagesPage() {
+export default function BulkDeleteProductsPage() {
   return (
     <Container className="py-8 md:py-10">
-      <BulkDeleteImagesForm />
+      <BulkDeleteProductsForm />
     </Container>
   );
 }

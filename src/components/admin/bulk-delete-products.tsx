@@ -6,11 +6,11 @@ import { Button } from "@/components/ui/button";
 import { ProductSelectionGrid } from "@/components/admin/product-selection-grid";
 import { useAdminProducts } from "@/context/admin/admin-products-context";
 
-export function BulkDeleteImagesForm() {
+export function BulkDeleteProductsForm() {
   const { products, isLoading, refreshProducts } = useAdminProducts();
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [submitting, setSubmitting] = useState(false);
-  const [result, setResult] = useState<{ updated: number } | null>(null);
+  const [result, setResult] = useState<{ deleted: number } | null>(null);
   const [error, setError] = useState("");
 
   const submit = async () => {
@@ -24,7 +24,7 @@ export function BulkDeleteImagesForm() {
 
     if (
       !window.confirm(
-        `确定删除 ${selectedIds.size} 个产品的全部图片？Storage 中的文件将被移除，产品记录保留。`,
+        `确定永久删除 ${selectedIds.size} 个产品？\n\n将同时删除产品信息、图片及 Storage 文件，此操作不可恢复。`,
       )
     ) {
       return;
@@ -33,7 +33,7 @@ export function BulkDeleteImagesForm() {
     setSubmitting(true);
 
     try {
-      const response = await fetch("/api/admin/products/bulk-delete-images", {
+      const response = await fetch("/api/admin/products/bulk-delete", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -42,7 +42,7 @@ export function BulkDeleteImagesForm() {
       });
 
       const data = (await response.json()) as {
-        updated?: number;
+        deleted?: number;
         message?: string;
       };
 
@@ -50,7 +50,7 @@ export function BulkDeleteImagesForm() {
         throw new Error(data.message ?? "操作失败");
       }
 
-      setResult({ updated: data.updated ?? 0 });
+      setResult({ deleted: data.deleted ?? 0 });
       setSelectedIds(new Set());
       await refreshProducts();
     } catch (submitError) {
@@ -70,9 +70,9 @@ export function BulkDeleteImagesForm() {
     <div className="space-y-8">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">批量删除图片</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">批量删除产品</h1>
           <p className="mt-1 text-sm text-muted">
-            勾选产品图片后批量删除。仅移除图片与 Storage 文件，产品数据保留。
+            勾选产品后永久删除。产品信息、图片及 Storage 文件将全部移除，不可恢复。
           </p>
         </div>
         <Button href="/admin/products" variant="outline">
@@ -85,7 +85,6 @@ export function BulkDeleteImagesForm() {
           products={products}
           selectedIds={selectedIds}
           onSelectedIdsChange={setSelectedIds}
-          requireImage
         />
 
         <div className="flex flex-wrap items-center gap-3 border-t border-border pt-6">
@@ -98,7 +97,7 @@ export function BulkDeleteImagesForm() {
           >
             {submitting
               ? "处理中…"
-              : `删除 ${selectedIds.size} 个产品的图片`}
+              : `永久删除 ${selectedIds.size} 个产品`}
           </Button>
         </div>
       </section>
@@ -112,7 +111,7 @@ export function BulkDeleteImagesForm() {
       {result ? (
         <div className="rounded-sm border border-border bg-muted-bg px-5 py-4 text-sm">
           <p className="font-medium text-foreground">
-            已清除 {result.updated} 个产品的图片
+            已删除 {result.deleted} 个产品
           </p>
           <Link
             href="/admin/products"

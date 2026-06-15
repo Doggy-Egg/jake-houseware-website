@@ -274,50 +274,71 @@ export async function bulkSetProductStatus(options: {
   return { updated: targets.length, notFound };
 }
 
-export async function bulkRemoveProductImages(
+function collectProductImageUrls(product: Product): string[] {
+  const urls = new Set<string>();
+  for (const url of product.images) {
+    urls.add(url);
+  }
+  if (product.thumbnail) {
+    urls.add(product.thumbnail);
+  }
+  return [...urls];
+}
+
+export async function bulkDeleteProducts(
   productIds: string[],
-): Promise<{ updated: number }> {
+): Promise<{ deleted: number }> {
   if (productIds.length === 0) {
-    return { updated: 0 };
+    return { deleted: 0 };
   }
 
   const supabase = createSupabaseAdmin();
-  const now = new Date().toISOString();
   const allProducts = await readProducts();
   const idSet = new Set(productIds);
   const targets = allProducts.filter((product) => idSet.has(product.id));
 
   if (targets.length === 0) {
-    return { updated: 0 };
+    return { deleted: 0 };
   }
 
   const urls = new Set<string>();
   for (const product of targets) {
-    for (const url of product.images) {
+    for (const url of collectProductImageUrls(product)) {
       urls.add(url);
-    }
-    if (product.thumbnail) {
-      urls.add(product.thumbnail);
     }
   }
 
   await deleteProductImagesFromStorage([...urls]);
 
   const ids = targets.map((product) => product.id);
-  const { error } = await supabase
-    .from("products")
-    .update({ images: [], thumbnail: null, updated_at: now })
-    .in("id", ids);
+  const { error } = await supabase.from("products").delete().in("id", ids);
 
   if (error) {
     throw new ProductStoreError(error.message);
   }
 
-  return { updated: targets.length };
+  return { deleted: targets.length };
 }
 
 export async function deleteProduct(id: string): Promise<boolean> {
   const supabase = createSupabaseAdmin();
+  const { data: existingRow, error: readError } = await supabase
+    .from("products")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (readError) {
+    throw new ProductStoreError(readError.message);
+  }
+
+  if (!existingRow) {
+    return false;
+  }
+
+  const product = normalizeProduct(mapProductRow(existingRow as ProductRow));
+  await deleteProductImagesFromStorage(collectProductImageUrls(product));
+
   const { data, error } = await supabase
     .from("products")
     .delete()

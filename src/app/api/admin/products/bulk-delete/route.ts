@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
-import { bulkRemoveProductImages } from "@/lib/data/product-store";
+import { bulkDeleteProducts } from "@/lib/data/product-store";
 
 function revalidateProductPages() {
   revalidatePath("/");
@@ -27,12 +27,12 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const result = await bulkRemoveProductImages(productIds);
+    const result = await bulkDeleteProducts(productIds);
     revalidateProductPages();
     return NextResponse.json(result);
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : "批量删除图片失败";
+      error instanceof Error ? error.message : "批量删除产品失败";
     return NextResponse.json({ message }, { status: 500 });
   }
 }
