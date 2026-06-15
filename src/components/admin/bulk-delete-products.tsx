@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { BulkActionBar } from "@/components/admin/bulk-action-bar";
 import { ProductSelectionGrid } from "@/components/admin/product-selection-grid";
 import { useAdminProducts } from "@/context/admin/admin-products-context";
 
@@ -67,61 +68,57 @@ export function BulkDeleteProductsForm() {
   }
 
   return (
-    <div className="space-y-8">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">批量删除产品</h1>
-          <p className="mt-1 text-sm text-muted">
-            先选择 Category 和 Sub-category，再勾选产品永久删除。产品信息、图片及 Storage 文件将全部移除，不可恢复。
-          </p>
-        </div>
-        <Button href="/admin/products" variant="outline">
-          返回产品列表
-        </Button>
-      </div>
-
-      <section className="rounded-sm border border-border bg-surface p-6 space-y-6">
-        <ProductSelectionGrid
-          products={products}
-          selectedIds={selectedIds}
-          onSelectedIdsChange={setSelectedIds}
-          requireCategory
-        />
-
-        <div className="flex flex-wrap items-center gap-3 border-t border-border pt-6">
-          <Button
-            type="button"
-            variant="outline"
-            disabled={submitting || selectedIds.size === 0}
-            onClick={submit}
-            className="border-red-200 text-red-700 hover:border-red-300 hover:bg-red-50"
-          >
-            {submitting
-              ? "处理中…"
-              : `永久删除 ${selectedIds.size} 个产品`}
+    <>
+      <div className="space-y-8 pb-24">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight">批量删除产品</h1>
+            <p className="mt-1 text-sm text-muted">
+              先选择 Category 和 Sub-category，再勾选产品永久删除。产品信息、图片及 Storage 文件将全部移除，不可恢复。
+            </p>
+          </div>
+          <Button href="/admin/products" variant="outline">
+            返回产品列表
           </Button>
         </div>
-      </section>
 
-      {error ? (
-        <p className="text-sm text-red-600" role="alert">
-          {error}
-        </p>
-      ) : null}
+        <section className="rounded-sm border border-border bg-surface p-6">
+          <ProductSelectionGrid
+            products={products}
+            selectedIds={selectedIds}
+            onSelectedIdsChange={setSelectedIds}
+            requireCategory
+          />
+        </section>
 
-      {result ? (
-        <div className="rounded-sm border border-border bg-muted-bg px-5 py-4 text-sm">
-          <p className="font-medium text-foreground">
-            已删除 {result.deleted} 个产品
+        {error ? (
+          <p className="text-sm text-red-600" role="alert">
+            {error}
           </p>
-          <Link
-            href="/admin/products"
-            className="mt-3 inline-block text-accent underline-offset-4 hover:underline"
-          >
-            查看产品列表
-          </Link>
-        </div>
-      ) : null}
-    </div>
+        ) : null}
+
+        {result ? (
+          <div className="rounded-sm border border-border bg-muted-bg px-5 py-4 text-sm">
+            <p className="font-medium text-foreground">
+              已删除 {result.deleted} 个产品
+            </p>
+            <Link
+              href="/admin/products"
+              className="mt-3 inline-block text-accent underline-offset-4 hover:underline"
+            >
+              查看产品列表
+            </Link>
+          </div>
+        ) : null}
+      </div>
+
+      <BulkActionBar
+        selectedCount={selectedIds.size}
+        submitting={submitting}
+        onSubmit={submit}
+        submitLabel={`永久删除 ${selectedIds.size} 个产品`}
+        variant="danger"
+      />
+    </>
   );
 }

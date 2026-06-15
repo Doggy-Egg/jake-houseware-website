@@ -204,7 +204,7 @@ export function AdminProductsTable() {
             批量上传图片
           </Button>
           <Button href="/admin/products/bulk-deactivate" variant="outline">
-            批量无效化
+            批量下架
           </Button>
           <Button href="/admin/products/bulk-delete" variant="outline">
             批量删除产品
