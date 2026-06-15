@@ -22,9 +22,17 @@ function matchesProductFilters(
     statusFilter: "all" | ProductStatus;
     query: string;
     requireImage: boolean;
+    allowedStatuses?: ProductStatus[];
   },
 ) {
   if (options.requireImage && !getProductPrimaryImage(product)) {
+    return false;
+  }
+
+  if (
+    options.allowedStatuses &&
+    !options.allowedStatuses.includes(product.status)
+  ) {
     return false;
   }
 
@@ -67,6 +75,8 @@ type ProductSelectionGridProps = {
   requireImage?: boolean;
   /** Must pick a category before showing products. */
   requireCategory?: boolean;
+  /** Limit which product statuses appear in the grid. Hides the status filter. */
+  allowedStatuses?: ProductStatus[];
 };
 
 export function ProductSelectionGrid({
@@ -75,6 +85,7 @@ export function ProductSelectionGrid({
   onSelectedIdsChange,
   requireImage = false,
   requireCategory = false,
+  allowedStatuses,
 }: ProductSelectionGridProps) {
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState(requireCategory ? "" : "all");
@@ -113,9 +124,10 @@ export function ProductSelectionGrid({
         statusFilter,
         query,
         requireImage,
+        allowedStatuses,
       }),
     );
-  }, [products, query, category, subCategory, statusFilter, requireImage]);
+  }, [products, query, category, subCategory, statusFilter, requireImage, allowedStatuses]);
 
   const categorySelected = !requireCategory || (category !== "" && category !== "all");
 
@@ -131,9 +143,10 @@ export function ProductSelectionGrid({
         statusFilter: "all",
         query: "",
         requireImage,
+        allowedStatuses,
       }),
     ).length;
-  }, [products, category, categorySelected, requireImage]);
+  }, [products, category, categorySelected, requireImage, allowedStatuses]);
 
   const visibleIds = useMemo(
     () => filtered.map((product) => product.id),
@@ -189,7 +202,9 @@ export function ProductSelectionGrid({
   };
 
   const hasActiveFilters =
-    subCategory !== "all" || statusFilter !== "all" || query.trim().length > 0;
+    subCategory !== "all" ||
+    (!allowedStatuses && statusFilter !== "all") ||
+    query.trim().length > 0;
 
   return (
     <div className="space-y-4">
@@ -262,27 +277,29 @@ export function ProductSelectionGrid({
                   className="h-11 w-full rounded-sm border border-border bg-surface px-4 text-sm focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
                 />
               </div>
-              <div className="w-full sm:max-w-[160px]">
-                <label
-                  htmlFor="product-grid-status"
-                  className="mb-2 block text-sm font-medium text-foreground"
-                >
-                  状态
-                </label>
-                <select
-                  id="product-grid-status"
-                  value={statusFilter}
-                  onChange={(event) =>
-                    setStatusFilter(event.target.value as "all" | ProductStatus)
-                  }
-                  className="h-11 w-full rounded-sm border border-border bg-surface px-4 text-sm focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
-                >
-                  <option value="all">全部状态</option>
-                  <option value="active">上架中</option>
-                  <option value="inactive">已下架</option>
-                  <option value="draft">草稿</option>
-                </select>
-              </div>
+              {!allowedStatuses ? (
+                <div className="w-full sm:max-w-[160px]">
+                  <label
+                    htmlFor="product-grid-status"
+                    className="mb-2 block text-sm font-medium text-foreground"
+                  >
+                    状态
+                  </label>
+                  <select
+                    id="product-grid-status"
+                    value={statusFilter}
+                    onChange={(event) =>
+                      setStatusFilter(event.target.value as "all" | ProductStatus)
+                    }
+                    className="h-11 w-full rounded-sm border border-border bg-surface px-4 text-sm focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
+                  >
+                    <option value="all">全部状态</option>
+                    <option value="active">上架中</option>
+                    <option value="inactive">已下架</option>
+                    <option value="draft">草稿</option>
+                  </select>
+                </div>
+              ) : null}
             </>
           ) : null}
         </div>

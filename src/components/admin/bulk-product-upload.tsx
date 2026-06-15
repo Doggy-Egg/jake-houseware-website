@@ -216,7 +216,7 @@ export function BulkProductUploadForm() {
     <div className="space-y-8">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">批量上传产品图片</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">批量上传</h1>
           <p className="mt-1 text-sm text-muted">
             文件名以 <code>JK</code> 或 <code>JH</code> 开头时，自动识别为 Item No.（如{" "}
             <code>JK-803.jpg</code>）。其他文件名需在下表手动填写货号。

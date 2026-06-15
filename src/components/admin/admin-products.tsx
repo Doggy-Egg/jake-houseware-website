@@ -201,7 +201,10 @@ export function AdminProductsTable() {
         <div className="flex flex-wrap gap-3">
           <Button href="/admin/products/new">新增产品</Button>
           <Button href="/admin/products/bulk-upload" variant="outline">
-            批量上传图片
+            批量上传
+          </Button>
+          <Button href="/admin/products/bulk-publish" variant="outline">
+            批量发布
           </Button>
           <Button href="/admin/products/bulk-deactivate" variant="outline">
             批量下架

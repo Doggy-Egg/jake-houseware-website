@@ -7,7 +7,7 @@ import { BulkActionBar } from "@/components/admin/bulk-action-bar";
 import { ProductSelectionGrid } from "@/components/admin/product-selection-grid";
 import { useAdminProducts } from "@/context/admin/admin-products-context";
 
-export function BulkDeactivateProductsForm() {
+export function BulkPublishProductsForm() {
   const { products, isLoading, refreshProducts } = useAdminProducts();
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [submitting, setSubmitting] = useState(false);
@@ -25,7 +25,7 @@ export function BulkDeactivateProductsForm() {
 
     if (
       !window.confirm(
-        `确定将 ${selectedIds.size} 个产品设为「已下架」？前台将不再显示，数据仍保留。`,
+        `确定发布 ${selectedIds.size} 个产品？发布后将在前台显示。`,
       )
     ) {
       return;
@@ -38,7 +38,7 @@ export function BulkDeactivateProductsForm() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          status: "inactive",
+          status: "active",
           productIds: [...selectedIds],
         }),
       });
@@ -73,9 +73,9 @@ export function BulkDeactivateProductsForm() {
       <div className="space-y-8 pb-24">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight">批量下架</h1>
+            <h1 className="text-2xl font-semibold tracking-tight">批量发布</h1>
             <p className="mt-1 text-sm text-muted">
-              先选择 Category 和 Sub-category，再勾选产品批量下架。仅显示「上架中」和「草稿」，已下架产品不会出现。
+              先选择 Category 和 Sub-category，再勾选已下架产品批量发布。仅显示「已下架」状态的产品。
             </p>
           </div>
           <Button href="/admin/products" variant="outline">
@@ -89,7 +89,7 @@ export function BulkDeactivateProductsForm() {
             selectedIds={selectedIds}
             onSelectedIdsChange={setSelectedIds}
             requireCategory
-            allowedStatuses={["active", "draft"]}
+            allowedStatuses={["inactive"]}
           />
         </section>
 
@@ -102,7 +102,7 @@ export function BulkDeactivateProductsForm() {
         {result ? (
           <div className="rounded-sm border border-border bg-muted-bg px-5 py-4 text-sm">
             <p className="font-medium text-foreground">
-              已下架 {result.updated} 个产品
+              已发布 {result.updated} 个产品
             </p>
             <Link
               href="/admin/products"
@@ -118,7 +118,7 @@ export function BulkDeactivateProductsForm() {
         selectedCount={selectedIds.size}
         submitting={submitting}
         onSubmit={submit}
-        submitLabel={`下架 ${selectedIds.size} 个产品`}
+        submitLabel={`发布 ${selectedIds.size} 个产品`}
       />
     </>
   );
