@@ -7,7 +7,6 @@ import { AddToInquiryButton } from "@/components/inquiry/add-to-inquiry-button";
 import { ProductGallery } from "@/components/products/product-gallery";
 import { getCollectionName } from "@/lib/data/products";
 import { getProductBySlug, getAllProductSlugs } from "@/lib/data/queries";
-import { getProductDisplayName } from "@/lib/utils/product-display";
 import {
   buildProductJsonLd,
   buildProductMetadata,
@@ -35,7 +34,6 @@ export default async function ProductDetailPage({
   if (!product) notFound();
 
   const jsonLd = await buildProductJsonLd(product);
-  const displayName = getProductDisplayName(product);
 
   return (
     <Container as="main" className="py-16 md:py-20">
@@ -49,18 +47,15 @@ export default async function ProductDetailPage({
           Products
         </Link>
         <span className="mx-2">/</span>
-        <span className="text-foreground">{displayName}</span>
+        <span className="text-foreground">{product.itemNo}</span>
       </nav>
 
       <div className="grid gap-12 lg:grid-cols-2 lg:gap-16">
-        <ProductGallery images={product.images} name={displayName} />
+        <ProductGallery images={product.images} itemNo={product.itemNo} />
 
         <div>
-          <p className="text-xs font-medium uppercase tracking-widest text-muted">
+          <h1 className="text-3xl font-semibold tracking-tight text-foreground">
             {product.itemNo}
-          </p>
-          <h1 className="mt-3 text-3xl font-semibold tracking-tight text-foreground">
-            {displayName}
           </h1>
 
           <div className="mt-4 flex flex-wrap gap-2">

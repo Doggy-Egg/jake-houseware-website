@@ -160,7 +160,7 @@ export async function readProducts(): Promise<Product[]> {
   const { data, error } = await supabase
     .from("products")
     .select("*")
-    .order("name", { ascending: true });
+    .order("item_no", { ascending: true });
 
   if (error) {
     throw new ProductStoreError(error.message);

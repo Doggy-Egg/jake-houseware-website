@@ -9,7 +9,6 @@ import {
 } from "react";
 import type { InquiryItem } from "@/types/inquiry";
 import type { Product } from "@/types/product";
-import { getProductDisplayName } from "@/lib/utils/product-display";
 import { getProductPrimaryImage } from "@/lib/utils/product-image";
 
 const STORAGE_KEY = "jake-houseware-inquiry";
@@ -114,7 +113,7 @@ export function InquiryProvider({ children }: { children: React.ReactNode }) {
       {
         productId: product.id,
         productSlug: product.slug,
-        productName: getProductDisplayName(product),
+        productName: product.itemNo,
         productItemNo: product.itemNo,
         productImage,
         quantity: Math.max(1, quantity),

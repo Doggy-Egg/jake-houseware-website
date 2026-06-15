@@ -43,7 +43,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
       <SectionHeading
         eyebrow="Catalog"
         title="Products"
-        description="Browse our wholesale houseware catalog. Filter by category, sub-category, or search by product name and Item No."
+        description="Browse our wholesale houseware catalog. Filter by category, sub-category, or search by Item No."
       />
 
       <div className="mt-10 space-y-6">

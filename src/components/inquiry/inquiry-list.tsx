@@ -72,7 +72,7 @@ export function InquiryListContent() {
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={item.productImage}
-                      alt={item.productName}
+                      alt={item.productItemNo}
                       className="max-h-full max-w-full object-contain"
                     />
                   ) : (
@@ -86,9 +86,8 @@ export function InquiryListContent() {
                     href={`/products/${item.productSlug}`}
                     className="font-medium text-foreground hover:text-accent"
                   >
-                    {item.productName}
+                    {item.productItemNo}
                   </Link>
-                  <p className="mt-1 text-sm text-muted">{item.productItemNo}</p>
                 </div>
               </div>
 

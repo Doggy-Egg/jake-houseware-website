@@ -5,10 +5,10 @@ import { cn } from "@/lib/utils/cn";
 
 type ProductGalleryProps = {
   images: string[];
-  name: string;
+  itemNo: string;
 };
 
-export function ProductGallery({ images, name }: ProductGalleryProps) {
+export function ProductGallery({ images, itemNo }: ProductGalleryProps) {
   const [activeIndex, setActiveIndex] = useState(0);
   const activeImage = images[activeIndex] ?? images[0];
 
@@ -19,7 +19,7 @@ export function ProductGallery({ images, name }: ProductGalleryProps) {
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={activeImage}
-            alt={name}
+            alt={itemNo}
             className="max-h-full max-w-full object-contain"
           />
         ) : null}
@@ -42,7 +42,7 @@ export function ProductGallery({ images, name }: ProductGalleryProps) {
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={image}
-                alt={`${name} view ${index + 1}`}
+                alt={`${itemNo} view ${index + 1}`}
                 className="max-h-full max-w-full object-contain"
               />
             </button>

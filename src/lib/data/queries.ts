@@ -6,7 +6,12 @@ import type { ProductSubCategorySlug } from "@/lib/constants/sub-categories";
 import type { CollectionSlug } from "@/lib/constants/collections";
 
 function sortProducts(products: Product[]): Product[] {
-  return [...products].sort((a, b) => a.name.localeCompare(b.name));
+  return [...products].sort((a, b) =>
+    a.itemNo.localeCompare(b.itemNo, undefined, {
+      numeric: true,
+      sensitivity: "base",
+    }),
+  );
 }
 
 async function getPublicProducts(): Promise<Product[]> {
