@@ -42,7 +42,7 @@ export function BulkActionBar({
         </p>
         <Button
           type="button"
-          variant={variant === "danger" ? "outline" : "default"}
+          variant={variant === "danger" ? "outline" : "primary"}
           disabled={disabled || submitting || selectedCount === 0}
           onClick={onSubmit}
           className={cn(
