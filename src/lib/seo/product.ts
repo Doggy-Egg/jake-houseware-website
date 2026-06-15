@@ -2,21 +2,23 @@ import type { Metadata } from "next";
 import type { Product } from "@/types/product";
 import { siteConfig } from "@/lib/constants/site";
 import { getCategoryName } from "@/lib/data/taxonomy-queries";
+import { getProductDisplayName } from "@/lib/utils/product-display";
 import { getProductPrimaryImage } from "@/lib/utils/product-image";
 
 export async function buildProductMetadata(product: Product): Promise<Metadata> {
+  const displayName = getProductDisplayName(product);
   const categoryName = await getCategoryName(product.categorySlug);
   const description =
     product.description ??
-    `${product.name} — wholesale ${categoryName} from ${siteConfig.name}.`;
+    `${displayName} — wholesale ${categoryName} from ${siteConfig.name}.`;
 
   const primaryImage = getProductPrimaryImage(product);
 
   return {
-    title: product.name,
+    title: displayName,
     description,
     openGraph: {
-      title: product.name,
+      title: displayName,
       description,
       images: primaryImage ? [{ url: primaryImage }] : [],
       type: "website",
@@ -29,7 +31,7 @@ export async function buildProductJsonLd(product: Product) {
   return {
     "@context": "https://schema.org",
     "@type": "Product",
-    name: product.name,
+    name: getProductDisplayName(product),
     sku: product.itemNo,
     description: product.description,
     image: getProductPrimaryImage(product) ?? product.images,

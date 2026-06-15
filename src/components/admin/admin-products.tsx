@@ -7,6 +7,7 @@ import { useAdminProducts } from "@/context/admin/admin-products-context";
 import { adminCopy, productStatusLabels } from "@/lib/constants/admin";
 import { lookupTaxonomyName } from "@/lib/utils/taxonomy-lookup";
 import { formatCollectionAdminLabels } from "@/lib/utils/admin-labels";
+import { getProductDisplayName } from "@/lib/utils/product-display";
 import type { Product } from "@/types/product";
 
 export function AdminDashboardContent() {
@@ -89,7 +90,7 @@ export function AdminDashboardContent() {
               >
                 <div className="min-w-0">
                   <p className="truncate text-sm font-medium text-foreground">
-                    {product.name}
+                    {getProductDisplayName(product)}
                   </p>
                   <p className="mt-0.5 text-xs text-muted">{product.itemNo}</p>
                 </div>
@@ -170,6 +171,7 @@ export function AdminProductsTable() {
       const matchesQuery =
         !normalized ||
         product.name.toLowerCase().includes(normalized) ||
+        getProductDisplayName(product).toLowerCase().includes(normalized) ||
         product.itemNo.toLowerCase().includes(normalized) ||
         product.slug.toLowerCase().includes(normalized);
       return matchesCategory && matchesQuery;
@@ -196,7 +198,15 @@ export function AdminProductsTable() {
           <h1 className="text-2xl font-semibold tracking-tight">产品管理</h1>
           <p className="mt-1 text-sm text-muted">管理批发产品目录</p>
         </div>
-        <Button href="/admin/products/new">新增产品</Button>
+        <div className="flex flex-wrap gap-3">
+          <Button href="/admin/products/new">新增产品</Button>
+          <Button href="/admin/products/bulk-upload" variant="outline">
+            批量上传图片
+          </Button>
+          <Button href="/admin/products/bulk-deactivate" variant="outline">
+            批量无效化
+          </Button>
+        </div>
       </div>
 
       <div className="flex flex-col gap-3 sm:flex-row">
@@ -253,7 +263,7 @@ export function AdminProductsTable() {
                   <tr key={product.id} className="hover:bg-muted-bg/50">
                     <td className="px-5 py-4">
                       <p className="font-medium text-foreground">
-                        {product.name}
+                        {getProductDisplayName(product)}
                       </p>
                       <p className="mt-0.5 text-xs text-muted">
                         {product.itemNo} · {product.slug}
@@ -297,7 +307,10 @@ export function AdminProductsTable() {
                         <button
                           type="button"
                           onClick={() =>
-                            handleDelete(product.id, product.name)
+                            handleDelete(
+                              product.id,
+                              getProductDisplayName(product),
+                            )
                           }
                           className="font-medium text-muted transition-colors hover:text-foreground"
                         >

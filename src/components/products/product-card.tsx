@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ProductCardInquiryAction } from "@/components/inquiry/add-to-inquiry-button";
 import { CardContent, CardImage, CardTitle } from "@/components/ui/card";
 import { getProductPrimaryImage } from "@/lib/utils/product-image";
+import { getProductDisplayName } from "@/lib/utils/product-display";
 import { cn } from "@/lib/utils/cn";
 import type { Product } from "@/types/product";
 
@@ -12,6 +13,8 @@ type ProductCardProps = {
 };
 
 export function ProductCard({ product }: ProductCardProps) {
+  const displayName = getProductDisplayName(product);
+
   return (
     <article
       className={cn(
@@ -22,14 +25,14 @@ export function ProductCard({ product }: ProductCardProps) {
       <Link href={`/products/${product.slug}`} className="block">
         <CardImage
           src={getProductPrimaryImage(product)}
-          alt={product.name}
+          alt={displayName}
           aspectRatio="square"
         />
         <CardContent className="pb-14">
           <p className="text-xs uppercase tracking-widest text-muted">
             {product.itemNo}
           </p>
-          <CardTitle className="mt-2">{product.name}</CardTitle>
+          <CardTitle className="mt-2">{displayName}</CardTitle>
         </CardContent>
       </Link>
       <ProductCardInquiryAction product={product} />

@@ -25,8 +25,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ message: "Invalid JSON payload." }, { status: 400 });
   }
 
-  if (!body.name?.trim() || !body.itemNo?.trim()) {
-    return NextResponse.json({ message: "Name and itemNo are required." }, { status: 400 });
+  if (!body.itemNo?.trim()) {
+    return NextResponse.json({ message: "itemNo is required." }, { status: 400 });
   }
 
   try {

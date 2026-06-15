@@ -128,7 +128,7 @@ async function buildProduct(
     id,
     slug: resolveProductSlug({ itemNo, id }),
     itemNo,
-    name: input.name.trim(),
+    name: optionalString(input.name) ?? "",
     description: optionalString(input.description),
     categorySlug: input.categorySlug,
     subCategorySlug,
@@ -215,6 +215,60 @@ export async function updateProduct(
   return updated;
 }
 
+export async function bulkSetProductStatus(options: {
+  status: ProductStatus;
+  itemNos?: string[];
+  categorySlug?: string;
+}): Promise<{ updated: number; notFound: string[] }> {
+  const supabase = createSupabaseAdmin();
+  const now = new Date().toISOString();
+  const allProducts = await readProducts();
+  let targets: Product[] = [];
+  let notFound: string[] = [];
+
+  if (options.categorySlug) {
+    targets = allProducts.filter(
+      (product) => product.categorySlug === options.categorySlug,
+    );
+  } else {
+    const itemNos = options.itemNos ?? [];
+    const keyToProduct = new Map(
+      allProducts.map((product) => [
+        normalizeItemNoKey(product.itemNo),
+        product,
+      ]),
+    );
+
+    const targetIds = new Set<string>();
+    for (const itemNo of itemNos) {
+      const product = keyToProduct.get(normalizeItemNoKey(itemNo));
+      if (product) {
+        targetIds.add(product.id);
+      } else {
+        notFound.push(itemNo);
+      }
+    }
+
+    targets = allProducts.filter((product) => targetIds.has(product.id));
+  }
+
+  if (targets.length === 0) {
+    return { updated: 0, notFound };
+  }
+
+  const ids = targets.map((product) => product.id);
+  const { error } = await supabase
+    .from("products")
+    .update({ status: options.status, updated_at: now })
+    .in("id", ids);
+
+  if (error) {
+    throw new ProductStoreError(error.message);
+  }
+
+  return { updated: targets.length, notFound };
+}
+
 export async function deleteProduct(id: string): Promise<boolean> {
   const supabase = createSupabaseAdmin();
   const { data, error } = await supabase
@@ -254,6 +308,95 @@ export async function isItemNoTaken(
     (product) =>
       product.id !== excludeId && normalizeItemNoKey(product.itemNo) === key,
   );
+}
+
+export async function findProductByItemNo(
+  itemNo: string,
+): Promise<Product | undefined> {
+  const key = normalizeItemNoKey(itemNo);
+  if (!key) return undefined;
+
+  const products = await readProducts();
+  return products.find(
+    (product) => normalizeItemNoKey(product.itemNo) === key,
+  );
+}
+
+export async function upsertProductImageByItemNo(options: {
+  itemNo: string;
+  categorySlug: ProductCategorySlug;
+  subCategorySlug?: ProductSubCategorySlug;
+  imageUrl: string;
+  status?: ProductStatus;
+  updateExisting: boolean;
+}): Promise<
+  | { action: "created"; product: Product }
+  | { action: "updated"; product: Product }
+  | { action: "skipped"; reason: string; itemNo: string }
+> {
+  const itemNo = options.itemNo.trim();
+  if (!itemNo) {
+    return { action: "skipped", reason: "无法从文件名解析 Item No.", itemNo: "" };
+  }
+
+  const existing = await findProductByItemNo(itemNo);
+
+  if (existing) {
+    if (!options.updateExisting) {
+      return {
+        action: "skipped",
+        reason: "Item No. 已存在（未勾选更新）",
+        itemNo,
+      };
+    }
+
+    const images = [
+      options.imageUrl,
+      ...existing.images.filter((url) => url !== options.imageUrl),
+    ];
+
+    const updated = await updateProduct(existing.id, {
+      name: existing.name,
+      itemNo: existing.itemNo,
+      description: existing.description,
+      categorySlug: options.categorySlug,
+      subCategorySlug: options.subCategorySlug ?? existing.subCategorySlug,
+      collectionSlugs: existing.collectionSlugs,
+      images,
+      thumbnail: options.imageUrl,
+      material: existing.material,
+      dimensions: existing.dimensions,
+      moq: existing.moq,
+      packaging: existing.packaging,
+      leadTime: existing.leadTime,
+      keywords: existing.keywords,
+      weight: existing.weight,
+      cartonSize: existing.cartonSize,
+      qtyPerCarton: existing.qtyPerCarton,
+      cbm: existing.cbm,
+      factory: existing.factory,
+      status: options.status ?? existing.status,
+    });
+
+    if (!updated) {
+      throw new ProductStoreError("Failed to update existing product.");
+    }
+
+    return { action: "updated", product: updated };
+  }
+
+  const product = await createProduct({
+    name: "",
+    itemNo,
+    categorySlug: options.categorySlug,
+    subCategorySlug: options.subCategorySlug,
+    collectionSlugs: [],
+    images: [options.imageUrl],
+    thumbnail: options.imageUrl,
+    status: options.status ?? "draft",
+  });
+
+  return { action: "created", product };
 }
 
 export async function migrateProductsCategorySlug(

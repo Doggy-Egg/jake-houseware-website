@@ -147,7 +147,6 @@ function validateForm(
 ): FormErrors {
   const errors: FormErrors = {};
 
-  if (!form.name.trim()) errors.name = "请填写产品名称";
   if (!form.itemNo.trim()) {
     errors.itemNo = "请填写 Item No.";
   } else if (
@@ -293,11 +292,11 @@ export function ProductForm({
       >
         <div className="grid gap-5 lg:grid-cols-2">
           <Input
-            label="产品名称"
+            label={`产品名称 (${adminCopy.optional})`}
             value={form.name}
             onChange={(event) => updateField("name", event.target.value)}
             error={errors.name}
-            required
+            placeholder="留空则前台显示 Item No."
           />
         <Input
           label="Item No."

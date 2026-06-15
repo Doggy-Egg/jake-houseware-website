@@ -104,10 +104,7 @@ export function ImageUploadField({ value, onChange }: ImageUploadFieldProps) {
           {uploading ? "上传中..." : "从本地上传"}
         </Button>
         <span className="text-xs text-muted">
-          保存至{" "}
-          <code className="rounded bg-muted-bg px-1 py-0.5">
-            public/images/products/
-          </code>
+          保存至 Supabase Storage（product-images）
         </span>
       </div>
 
