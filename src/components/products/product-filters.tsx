@@ -34,6 +34,7 @@ export function CategoryFilter({ categories }: CategoryFilterProps) {
       params.delete("category");
     }
     params.delete("subCategory");
+    resetPagination(params);
     startTransition(() => {
       router.push(`/products?${params.toString()}`);
     });
@@ -62,6 +63,10 @@ type SubCategoryFilterProps = {
   subCategories: TaxonomySubCategory[];
 };
 
+function resetPagination(params: URLSearchParams) {
+  params.delete("page");
+}
+
 export function SubCategoryFilter({ subCategories }: SubCategoryFilterProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -84,6 +89,7 @@ export function SubCategoryFilter({ subCategories }: SubCategoryFilterProps) {
     } else {
       params.delete("subCategory");
     }
+    resetPagination(params);
     startTransition(() => {
       router.push(`/products?${params.toString()}`);
     });
@@ -157,6 +163,7 @@ export function ProductSearch() {
       } else {
         params.delete("q");
       }
+      resetPagination(params);
       startTransition(() => {
         router.push(`/products?${params.toString()}`);
       });

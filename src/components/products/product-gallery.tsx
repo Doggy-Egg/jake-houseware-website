@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { ProductImage } from "@/components/ui/product-image";
 import { cn } from "@/lib/utils/cn";
 
 type ProductGalleryProps = {
@@ -14,13 +15,14 @@ export function ProductGallery({ images, itemNo }: ProductGalleryProps) {
 
   return (
     <div className="space-y-4">
-      <div className="flex aspect-square items-center justify-center overflow-hidden rounded-sm border border-border bg-white">
+      <div className="relative aspect-square overflow-hidden rounded-sm border border-border bg-white">
         {activeImage ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
+          <ProductImage
             src={activeImage}
             alt={itemNo}
-            className="max-h-full max-w-full object-contain"
+            fill
+            priority
+            sizes="(max-width: 1024px) 100vw, 50vw"
           />
         ) : null}
       </div>
@@ -33,17 +35,17 @@ export function ProductGallery({ images, itemNo }: ProductGalleryProps) {
               type="button"
               onClick={() => setActiveIndex(index)}
               className={cn(
-                "flex aspect-square items-center justify-center overflow-hidden rounded-sm border bg-white transition-colors",
+                "relative aspect-square overflow-hidden rounded-sm border bg-white transition-colors",
                 index === activeIndex
                   ? "border-accent ring-1 ring-accent"
                   : "border-border hover:border-accent/30",
               )}
             >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
+              <ProductImage
                 src={image}
                 alt={`${itemNo} view ${index + 1}`}
-                className="max-h-full max-w-full object-contain"
+                fill
+                sizes="120px"
               />
             </button>
           ))}

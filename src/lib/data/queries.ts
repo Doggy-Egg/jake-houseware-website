@@ -1,4 +1,5 @@
 import type { Product } from "@/types/product";
+import { PRODUCTS_PAGE_SIZE } from "@/lib/constants/products";
 import { readProducts } from "@/lib/data/product-store";
 import { isProductPubliclyVisible } from "@/lib/utils/product-visibility";
 import type { ProductCategorySlug } from "@/lib/constants/categories";
@@ -103,6 +104,37 @@ export async function filterProducts(options: {
   }
 
   return result;
+}
+
+export async function filterProductsPaginated(options: {
+  category?: ProductCategorySlug | null;
+  subCategory?: ProductSubCategorySlug | null;
+  collection?: CollectionSlug | null;
+  query?: string | null;
+  page?: number;
+  pageSize?: number;
+}): Promise<{
+  products: Product[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}> {
+  const pageSize = options.pageSize ?? PRODUCTS_PAGE_SIZE;
+  const all = await filterProducts(options);
+  const total = all.length;
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const requestedPage = Math.max(1, options.page ?? 1);
+  const page = Math.min(requestedPage, totalPages);
+  const start = (page - 1) * pageSize;
+
+  return {
+    products: all.slice(start, start + pageSize),
+    total,
+    page,
+    pageSize,
+    totalPages,
+  };
 }
 
 export async function getAllProductSlugs(): Promise<string[]> {

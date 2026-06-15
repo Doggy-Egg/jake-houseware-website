@@ -9,9 +9,10 @@ import type { Product } from "@/types/product";
 
 type ProductCardProps = {
   product: Product;
+  imagePriority?: boolean;
 };
 
-export function ProductCard({ product }: ProductCardProps) {
+export function ProductCard({ product, imagePriority = false }: ProductCardProps) {
   return (
     <article
       className={cn(
@@ -24,6 +25,8 @@ export function ProductCard({ product }: ProductCardProps) {
           src={getProductPrimaryImage(product)}
           alt={product.itemNo}
           aspectRatio="square"
+          priority={imagePriority}
+          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
         />
         <CardContent className="pb-14">
           <CardTitle>{product.itemNo}</CardTitle>
@@ -37,11 +40,14 @@ export function ProductCard({ product }: ProductCardProps) {
 type ProductGridProps = {
   products: Product[];
   emptyMessage?: string;
+  /** Eager-load images for the first N cards (above-the-fold). */
+  priorityCount?: number;
 };
 
 export function ProductGrid({
   products,
   emptyMessage = "No products match your filters.",
+  priorityCount = 4,
 }: ProductGridProps) {
   if (products.length === 0) {
     return (
@@ -59,8 +65,12 @@ export function ProductGrid({
 
   return (
     <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-      {products.map((product) => (
-        <ProductCard key={product.id} product={product} />
+      {products.map((product, index) => (
+        <ProductCard
+          key={product.id}
+          product={product}
+          imagePriority={index < priorityCount}
+        />
       ))}
     </div>
   );

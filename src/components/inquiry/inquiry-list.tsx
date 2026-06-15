@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { ProductImage } from "@/components/ui/product-image";
 import { InquirySubmissionForm } from "@/components/inquiry/inquiry-submission-form";
 import { useInquiry } from "@/context/inquiry/inquiry-context";
 
@@ -66,14 +67,14 @@ export function InquiryListContent() {
               <div className="flex min-w-0 items-center gap-4">
                 <Link
                   href={`/products/${item.productSlug}`}
-                  className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-sm border border-border bg-white"
+                  className="relative flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-sm border border-border bg-white"
                 >
                   {item.productImage ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
+                    <ProductImage
                       src={item.productImage}
                       alt={item.productItemNo}
-                      className="max-h-full max-w-full object-contain"
+                      fill
+                      sizes="64px"
                     />
                   ) : (
                     <div className="flex h-16 w-16 items-center justify-center">

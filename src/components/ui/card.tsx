@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { cn } from "@/lib/utils/cn";
+import { ProductImage } from "@/components/ui/product-image";
 
 type CardProps = {
   children: React.ReactNode;
@@ -30,6 +31,8 @@ type CardImageProps = {
   alt: string;
   aspectRatio?: "square" | "product" | "wide";
   className?: string;
+  priority?: boolean;
+  sizes?: string;
 };
 
 const aspectRatios = {
@@ -43,21 +46,25 @@ export function CardImage({
   alt,
   aspectRatio = "square",
   className,
+  priority = false,
+  sizes,
 }: CardImageProps) {
   return (
     <div
       className={cn(
-        "flex items-center justify-center overflow-hidden bg-white",
+        "relative flex items-center justify-center overflow-hidden bg-white",
         aspectRatios[aspectRatio],
         className,
       )}
     >
       {src ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
+        <ProductImage
           src={src}
           alt={alt}
-          className="max-h-full max-w-full object-contain transition-transform duration-300 group-hover:scale-[1.02]"
+          fill
+          priority={priority}
+          sizes={sizes}
+          className="transition-transform duration-300 group-hover:scale-[1.02]"
         />
       ) : (
         <div className="flex h-full w-full items-center justify-center">
