@@ -13,6 +13,7 @@ function revalidateProductPages() {
 
 export async function POST(request: NextRequest) {
   let body: {
+    productIds?: string[];
     itemNosText?: string;
     categorySlug?: string;
     status?: ProductStatus;
@@ -29,14 +30,30 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ message: "Invalid status." }, { status: 400 });
   }
 
+  const productIds = body.productIds?.filter(Boolean);
   const itemNos = body.itemNosText
     ? parseItemNoList(body.itemNosText)
     : undefined;
   const categorySlug = body.categorySlug?.trim();
 
-  if (!categorySlug && (!itemNos || itemNos.length === 0)) {
+  if (
+    !categorySlug &&
+    (!productIds || productIds.length === 0) &&
+    (!itemNos || itemNos.length === 0)
+  ) {
     return NextResponse.json(
-      { message: "请粘贴 Item No. 或选择 Category。" },
+      { message: "请选择产品、粘贴 Item No. 或选择 Category。" },
+      { status: 400 },
+    );
+  }
+
+  if (
+    categorySlug &&
+    productIds?.length &&
+    itemNos?.length
+  ) {
+    return NextResponse.json(
+      { message: "请只使用一种选择方式。" },
       { status: 400 },
     );
   }
@@ -48,8 +65,11 @@ export async function POST(request: NextRequest) {
   try {
     const result = await bulkSetProductStatus({
       status,
-      itemNos: categorySlug ? undefined : itemNos,
-      categorySlug: categorySlug || undefined,
+      productIds: productIds?.length ? productIds : undefined,
+      itemNos:
+        !productIds?.length && !categorySlug ? itemNos : undefined,
+      categorySlug:
+        !productIds?.length ? categorySlug || undefined : undefined,
     });
 
     revalidateProductPages();

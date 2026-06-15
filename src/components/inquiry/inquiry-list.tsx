@@ -66,14 +66,14 @@ export function InquiryListContent() {
               <div className="flex min-w-0 items-center gap-4">
                 <Link
                   href={`/products/${item.productSlug}`}
-                  className="shrink-0 overflow-hidden rounded-sm border border-border bg-muted-bg"
+                  className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-sm border border-border bg-white"
                 >
                   {item.productImage ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={item.productImage}
                       alt={item.productName}
-                      className="h-16 w-16 object-cover"
+                      className="max-h-full max-w-full object-contain"
                     />
                   ) : (
                     <div className="flex h-16 w-16 items-center justify-center">

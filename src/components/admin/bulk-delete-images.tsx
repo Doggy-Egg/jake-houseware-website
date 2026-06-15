@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { ProductSelectionGrid } from "@/components/admin/product-selection-grid";
 import { useAdminProducts } from "@/context/admin/admin-products-context";
 
-export function BulkDeactivateProductsForm() {
+export function BulkDeleteImagesForm() {
   const { products, isLoading, refreshProducts } = useAdminProducts();
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [submitting, setSubmitting] = useState(false);
@@ -24,7 +24,7 @@ export function BulkDeactivateProductsForm() {
 
     if (
       !window.confirm(
-        `确定将 ${selectedIds.size} 个产品设为「已下架」？前台将不再显示，数据仍保留。`,
+        `确定删除 ${selectedIds.size} 个产品的全部图片？Storage 中的文件将被移除，产品记录保留。`,
       )
     ) {
       return;
@@ -33,11 +33,10 @@ export function BulkDeactivateProductsForm() {
     setSubmitting(true);
 
     try {
-      const response = await fetch("/api/admin/products/bulk-status", {
+      const response = await fetch("/api/admin/products/bulk-delete-images", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          status: "inactive",
           productIds: [...selectedIds],
         }),
       });
@@ -71,9 +70,9 @@ export function BulkDeactivateProductsForm() {
     <div className="space-y-8">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">批量无效化产品</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">批量删除图片</h1>
           <p className="mt-1 text-sm text-muted">
-            勾选产品图片后批量下架。前台不可见，数据仍保留，可在编辑页恢复。
+            勾选产品图片后批量删除。仅移除图片与 Storage 文件，产品数据保留。
           </p>
         </div>
         <Button href="/admin/products" variant="outline">
@@ -86,17 +85,20 @@ export function BulkDeactivateProductsForm() {
           products={products}
           selectedIds={selectedIds}
           onSelectedIdsChange={setSelectedIds}
+          requireImage
         />
 
         <div className="flex flex-wrap items-center gap-3 border-t border-border pt-6">
           <Button
             type="button"
+            variant="outline"
             disabled={submitting || selectedIds.size === 0}
             onClick={submit}
+            className="border-red-200 text-red-700 hover:border-red-300 hover:bg-red-50"
           >
             {submitting
               ? "处理中…"
-              : `下架 ${selectedIds.size} 个产品`}
+              : `删除 ${selectedIds.size} 个产品的图片`}
           </Button>
         </div>
       </section>
@@ -110,7 +112,7 @@ export function BulkDeactivateProductsForm() {
       {result ? (
         <div className="rounded-sm border border-border bg-muted-bg px-5 py-4 text-sm">
           <p className="font-medium text-foreground">
-            已下架 {result.updated} 个产品
+            已清除 {result.updated} 个产品的图片
           </p>
           <Link
             href="/admin/products"

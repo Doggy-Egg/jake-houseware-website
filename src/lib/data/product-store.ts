@@ -7,6 +7,7 @@ import {
   type ProductRow,
 } from "@/lib/supabase/mappers";
 import { createSupabaseAdmin } from "@/lib/supabase/server";
+import { deleteProductImagesFromStorage } from "@/lib/supabase/product-images";
 import {
   generateProductId,
   normalizeItemNoKey,
@@ -217,6 +218,7 @@ export async function updateProduct(
 
 export async function bulkSetProductStatus(options: {
   status: ProductStatus;
+  productIds?: string[];
   itemNos?: string[];
   categorySlug?: string;
 }): Promise<{ updated: number; notFound: string[] }> {
@@ -226,7 +228,10 @@ export async function bulkSetProductStatus(options: {
   let targets: Product[] = [];
   let notFound: string[] = [];
 
-  if (options.categorySlug) {
+  if (options.productIds?.length) {
+    const idSet = new Set(options.productIds);
+    targets = allProducts.filter((product) => idSet.has(product.id));
+  } else if (options.categorySlug) {
     targets = allProducts.filter(
       (product) => product.categorySlug === options.categorySlug,
     );
@@ -267,6 +272,48 @@ export async function bulkSetProductStatus(options: {
   }
 
   return { updated: targets.length, notFound };
+}
+
+export async function bulkRemoveProductImages(
+  productIds: string[],
+): Promise<{ updated: number }> {
+  if (productIds.length === 0) {
+    return { updated: 0 };
+  }
+
+  const supabase = createSupabaseAdmin();
+  const now = new Date().toISOString();
+  const allProducts = await readProducts();
+  const idSet = new Set(productIds);
+  const targets = allProducts.filter((product) => idSet.has(product.id));
+
+  if (targets.length === 0) {
+    return { updated: 0 };
+  }
+
+  const urls = new Set<string>();
+  for (const product of targets) {
+    for (const url of product.images) {
+      urls.add(url);
+    }
+    if (product.thumbnail) {
+      urls.add(product.thumbnail);
+    }
+  }
+
+  await deleteProductImagesFromStorage([...urls]);
+
+  const ids = targets.map((product) => product.id);
+  const { error } = await supabase
+    .from("products")
+    .update({ images: [], thumbnail: null, updated_at: now })
+    .in("id", ids);
+
+  if (error) {
+    throw new ProductStoreError(error.message);
+  }
+
+  return { updated: targets.length };
 }
 
 export async function deleteProduct(id: string): Promise<boolean> {

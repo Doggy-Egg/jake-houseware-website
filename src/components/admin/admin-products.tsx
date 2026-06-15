@@ -206,6 +206,9 @@ export function AdminProductsTable() {
           <Button href="/admin/products/bulk-deactivate" variant="outline">
             批量无效化
           </Button>
+          <Button href="/admin/products/bulk-delete-images" variant="outline">
+            批量删除图片
+          </Button>
         </div>
       </div>
 

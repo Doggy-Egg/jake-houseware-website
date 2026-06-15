@@ -14,13 +14,13 @@ export function ProductGallery({ images, name }: ProductGalleryProps) {
 
   return (
     <div className="space-y-4">
-      <div className="aspect-square overflow-hidden rounded-sm border border-border bg-muted-bg">
+      <div className="flex aspect-square items-center justify-center overflow-hidden rounded-sm border border-border bg-white">
         {activeImage ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={activeImage}
             alt={name}
-            className="h-full w-full object-cover"
+            className="max-h-full max-w-full object-contain"
           />
         ) : null}
       </div>
@@ -33,7 +33,7 @@ export function ProductGallery({ images, name }: ProductGalleryProps) {
               type="button"
               onClick={() => setActiveIndex(index)}
               className={cn(
-                "aspect-square overflow-hidden rounded-sm border bg-muted-bg transition-colors",
+                "flex aspect-square items-center justify-center overflow-hidden rounded-sm border bg-white transition-colors",
                 index === activeIndex
                   ? "border-accent ring-1 ring-accent"
                   : "border-border hover:border-accent/30",
@@ -43,7 +43,7 @@ export function ProductGallery({ images, name }: ProductGalleryProps) {
               <img
                 src={image}
                 alt={`${name} view ${index + 1}`}
-                className="h-full w-full object-cover"
+                className="max-h-full max-w-full object-contain"
               />
             </button>
           ))}
