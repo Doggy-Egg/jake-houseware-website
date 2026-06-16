@@ -467,6 +467,60 @@ export async function upsertProductImageByItemNo(options: {
   return { action: "created", product };
 }
 
+export async function replaceProductImageByItemNo(options: {
+  itemNo: string;
+  imageUrl: string;
+}): Promise<
+  | { action: "updated"; product: Product }
+  | { action: "skipped"; reason: string; itemNo: string }
+> {
+  const itemNo = options.itemNo.trim();
+  if (!itemNo) {
+    return { action: "skipped", reason: "无法解析 Item No.", itemNo: "" };
+  }
+
+  const existing = await findProductByItemNo(itemNo);
+  if (!existing) {
+    return { action: "skipped", reason: "Item No. 不存在", itemNo };
+  }
+
+  const oldUrls = collectProductImageUrls(existing).filter(
+    (url) => url !== options.imageUrl,
+  );
+  if (oldUrls.length > 0) {
+    await deleteProductImagesFromStorage(oldUrls);
+  }
+
+  const updated = await updateProduct(existing.id, {
+    name: existing.name,
+    itemNo: existing.itemNo,
+    description: existing.description,
+    categorySlug: existing.categorySlug,
+    subCategorySlug: existing.subCategorySlug,
+    collectionSlugs: existing.collectionSlugs,
+    images: [options.imageUrl],
+    thumbnail: options.imageUrl,
+    material: existing.material,
+    dimensions: existing.dimensions,
+    moq: existing.moq,
+    packaging: existing.packaging,
+    leadTime: existing.leadTime,
+    keywords: existing.keywords,
+    weight: existing.weight,
+    cartonSize: existing.cartonSize,
+    qtyPerCarton: existing.qtyPerCarton,
+    cbm: existing.cbm,
+    factory: existing.factory,
+    status: existing.status,
+  });
+
+  if (!updated) {
+    throw new ProductStoreError("Failed to update existing product.");
+  }
+
+  return { action: "updated", product: updated };
+}
+
 export async function migrateProductsCategorySlug(
   oldSlug: string,
   newSlug: string,

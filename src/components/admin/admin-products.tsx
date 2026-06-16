@@ -203,6 +203,9 @@ export function AdminProductsTable() {
           <Button href="/admin/products/bulk-upload" variant="outline">
             批量上传
           </Button>
+          <Button href="/admin/products/bulk-update-images" variant="outline">
+            批量更新图片
+          </Button>
           <Button href="/admin/products/bulk-publish" variant="outline">
             批量发布
           </Button>

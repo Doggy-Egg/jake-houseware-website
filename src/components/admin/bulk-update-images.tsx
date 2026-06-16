@@ -1,32 +1,20 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useAdminProducts } from "@/context/admin/admin-products-context";
-import { adminCopy, productStatusLabels } from "@/lib/constants/admin";
-import type { ProductCategorySlug } from "@/lib/constants/categories";
-import type { ProductSubCategorySlug } from "@/lib/constants/sub-categories";
 import {
   isAutoItemNoFilename,
   parseItemNoFromFilename,
   resolveBulkUploadItemNo,
 } from "@/lib/utils/item-no";
-import type { ProductStatus } from "@/types/product";
 
-type TaxonomyCategory = { slug: string; name: string };
-type TaxonomySubCategory = {
-  slug: string;
-  name: string;
-  categorySlug: string;
-};
-
-type ImportResult = {
+type UpdateResult = {
   fileName: string;
   itemNo: string;
   status: "pending" | "success" | "skipped" | "error";
   message?: string;
-  action?: "created" | "updated" | "skipped";
 };
 
 type FileEntry = {
@@ -45,46 +33,13 @@ function resolveEntryItemNo(entry: FileEntry) {
   return resolveBulkUploadItemNo(entry.file.name, entry.manualItemNo);
 }
 
-export function BulkProductUploadForm() {
+export function BulkUpdateImagesForm() {
   const { refreshProducts } = useAdminProducts();
   const inputRef = useRef<HTMLInputElement>(null);
-  const [categories, setCategories] = useState<TaxonomyCategory[]>([]);
-  const [subCategories, setSubCategories] = useState<TaxonomySubCategory[]>([]);
-  const [categorySlug, setCategorySlug] = useState<ProductCategorySlug | "">("");
-  const [subCategorySlug, setSubCategorySlug] = useState<
-    ProductSubCategorySlug | ""
-  >("");
-  const [status, setStatus] = useState<ProductStatus>("active");
-  const [updateExisting, setUpdateExisting] = useState(true);
   const [fileEntries, setFileEntries] = useState<FileEntry[]>([]);
   const [uploading, setUploading] = useState(false);
-  const [results, setResults] = useState<ImportResult[]>([]);
+  const [results, setResults] = useState<UpdateResult[]>([]);
   const [formError, setFormError] = useState("");
-
-  useEffect(() => {
-    void fetch("/api/taxonomy")
-      .then((response) => response.json())
-      .then(
-        (data: {
-          categories: TaxonomyCategory[];
-          subCategories: TaxonomySubCategory[];
-        }) => {
-          setCategories(data.categories);
-          setSubCategories(data.subCategories);
-          if (data.categories[0]) {
-            setCategorySlug(data.categories[0].slug as ProductCategorySlug);
-          }
-        },
-      );
-  }, []);
-
-  const visibleSubCategories = useMemo(
-    () =>
-      subCategories.filter(
-        (subCategory) => subCategory.categorySlug === categorySlug,
-      ),
-    [subCategories, categorySlug],
-  );
 
   const missingItemNoCount = useMemo(
     () => fileEntries.filter((entry) => !resolveEntryItemNo(entry)).length,
@@ -126,7 +81,7 @@ export function BulkProductUploadForm() {
   };
 
   const handleUpload = async () => {
-    if (!categorySlug || fileEntries.length === 0) return;
+    if (fileEntries.length === 0) return;
 
     const unresolved = fileEntries.filter((entry) => !resolveEntryItemNo(entry));
     if (unresolved.length > 0) {
@@ -144,27 +99,21 @@ export function BulkProductUploadForm() {
       })),
     );
 
-    const nextResults: ImportResult[] = [];
+    const nextResults: UpdateResult[] = [];
 
     for (const entry of fileEntries) {
       const itemNo = resolveEntryItemNo(entry);
       const formData = new FormData();
       formData.append("file", entry.file);
       formData.append("itemNo", itemNo);
-      formData.append("categorySlug", categorySlug);
-      if (subCategorySlug) {
-        formData.append("subCategorySlug", subCategorySlug);
-      }
-      formData.append("status", status);
-      formData.append("updateExisting", String(updateExisting));
 
       try {
-        const response = await fetch("/api/admin/products/import-image", {
+        const response = await fetch("/api/admin/products/update-image", {
           method: "POST",
           body: formData,
         });
         const data = (await response.json()) as {
-          action?: "created" | "updated" | "skipped";
+          action?: "updated" | "skipped";
           itemNo?: string;
           message?: string;
         };
@@ -174,14 +123,13 @@ export function BulkProductUploadForm() {
             fileName: entry.file.name,
             itemNo,
             status: "error",
-            message: data.message ?? "导入失败",
+            message: data.message ?? "更新失败",
           });
         } else if (data.action === "skipped") {
           nextResults.push({
             fileName: entry.file.name,
             itemNo: data.itemNo ?? itemNo,
             status: "skipped",
-            action: "skipped",
             message: data.message,
           });
         } else {
@@ -189,7 +137,6 @@ export function BulkProductUploadForm() {
             fileName: entry.file.name,
             itemNo: data.itemNo ?? itemNo,
             status: "success",
-            action: data.action,
           });
         }
       } catch {
@@ -216,12 +163,10 @@ export function BulkProductUploadForm() {
     <div className="space-y-8">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">批量上传</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">批量更新图片</h1>
           <p className="mt-1 text-sm text-muted">
-            文件名以 <code>JK</code>、<code>JH</code>、<code>BA</code>、<code>WA</code>、
-            <code>SH</code>、<code>M</code>+数字 等货号开头时自动识别（如 <code>JK-803.jpg</code>、
-            <code>BA01.jpg</code>）。其他文件名需在下表手动填写货号。
-            上传时自动压缩为 JPG（最长边 1200px，GIF 除外）。
+            仅更新<strong>已存在</strong>的产品。文件名即 Item No.（JK/JH/BA/WA/SH/M 等货号开头自动识别），
+            上传后会压缩为 JPG（最长边 1200px）并替换该产品全部旧图。
           </p>
         </div>
         <Button href="/admin/products" variant="outline">
@@ -230,96 +175,6 @@ export function BulkProductUploadForm() {
       </div>
 
       <div className="rounded-sm border border-border bg-surface p-6 space-y-6">
-        <div className="grid gap-5 lg:grid-cols-2">
-          <div>
-            <label
-              htmlFor="bulk-category"
-              className="mb-2 block text-sm font-medium text-foreground"
-            >
-              Category <span className="text-red-600">*</span>
-            </label>
-            <select
-              id="bulk-category"
-              value={categorySlug}
-              onChange={(event) => {
-                setCategorySlug(event.target.value as ProductCategorySlug);
-                setSubCategorySlug("");
-              }}
-              className="h-11 w-full rounded-sm border border-border bg-surface px-4 text-sm focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
-            >
-              {categories.map((category) => (
-                <option key={category.slug} value={category.slug}>
-                  {category.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label
-              htmlFor="bulk-sub-category"
-              className="mb-2 block text-sm font-medium text-foreground"
-            >
-              Sub-category ({adminCopy.optional})
-            </label>
-            <select
-              id="bulk-sub-category"
-              value={subCategorySlug}
-              onChange={(event) =>
-                setSubCategorySlug(
-                  event.target.value as ProductSubCategorySlug | "",
-                )
-              }
-              className="h-11 w-full rounded-sm border border-border bg-surface px-4 text-sm focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
-            >
-              <option value="">不指定</option>
-              {visibleSubCategories.map((subCategory) => (
-                <option key={subCategory.slug} value={subCategory.slug}>
-                  {subCategory.name}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label
-              htmlFor="bulk-status"
-              className="mb-2 block text-sm font-medium text-foreground"
-            >
-              默认状态
-            </label>
-            <select
-              id="bulk-status"
-              value={status}
-              onChange={(event) =>
-                setStatus(event.target.value as ProductStatus)
-              }
-              className="h-11 w-full rounded-sm border border-border bg-surface px-4 text-sm focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
-            >
-              {Object.entries(productStatusLabels).map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <label className="flex items-start gap-3 pt-8 text-sm text-foreground">
-            <input
-              type="checkbox"
-              checked={updateExisting}
-              onChange={(event) => setUpdateExisting(event.target.checked)}
-              className="mt-1 h-4 w-4 rounded border-border"
-            />
-            <span>
-              若 Item No. 已存在，更新图片并归入所选 Category
-              <span className="mt-1 block text-xs text-muted">
-                未勾选时，重复 Item No. 的文件会被跳过
-              </span>
-            </span>
-          </label>
-        </div>
-
         <div className="space-y-3">
           <input
             ref={inputRef}
@@ -343,18 +198,17 @@ export function BulkProductUploadForm() {
               onClick={handleUpload}
               disabled={
                 uploading ||
-                !categorySlug ||
                 fileEntries.length === 0 ||
                 missingItemNoCount > 0
               }
             >
               {uploading
-                ? `上传中 (${results.length}/${fileEntries.length})...`
-                : `开始导入 (${fileEntries.length})`}
+                ? `更新中 (${results.length}/${fileEntries.length})...`
+                : `开始更新 (${fileEntries.length})`}
             </Button>
           </div>
           <p className="text-xs text-muted">
-            支持 JPG、PNG、WebP、GIF，单张最大 5MB。上传至 Supabase Storage，自动压缩。
+            支持 JPG、PNG、WebP、GIF，单张最大 5MB。不存在的 Item No. 会跳过；GIF 不压缩。
           </p>
           {formError ? (
             <p className="text-sm text-red-600" role="alert">
@@ -372,7 +226,7 @@ export function BulkProductUploadForm() {
       {fileEntries.length > 0 ? (
         <section className="space-y-3">
           <h2 className="text-sm font-semibold uppercase tracking-widest text-muted">
-            待导入 ({fileEntries.length})
+            待更新 ({fileEntries.length})
           </h2>
           <div className="overflow-hidden rounded-sm border border-border bg-surface">
             <table className="min-w-full text-left text-sm">
@@ -427,7 +281,7 @@ export function BulkProductUploadForm() {
         <section className="space-y-3">
           <div className="flex flex-wrap items-center gap-4 text-sm">
             <h2 className="font-semibold uppercase tracking-widest text-muted">
-              导入结果
+              更新结果
             </h2>
             <span className="text-muted">
               成功 {successCount} · 跳过 {skippedCount} · 失败 {errorCount}
@@ -456,8 +310,7 @@ export function BulkProductUploadForm() {
                     <td className="px-5 py-3 font-medium">{row.itemNo || "—"}</td>
                     <td className="px-5 py-3">
                       {row.status === "pending" && "处理中…"}
-                      {row.status === "success" &&
-                        (row.action === "updated" ? "已更新" : "已创建")}
+                      {row.status === "success" && "已更新"}
                       {row.status === "skipped" && "已跳过"}
                       {row.status === "error" && "失败"}
                     </td>

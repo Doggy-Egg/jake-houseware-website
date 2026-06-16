@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { AdminProductsProvider } from "@/context/admin/admin-products-context";
+import { getServerSession } from "@/lib/auth/admin-session";
 import { readProducts } from "@/lib/data/product-store";
 
 export const metadata: Metadata = {
@@ -15,6 +17,11 @@ export default async function AdminProtectedLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const isAuthenticated = await getServerSession();
+  if (!isAuthenticated) {
+    redirect("/admin/login");
+  }
+
   const products = await readProducts();
 
   return (

@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
-import { upsertProductImageByItemNo } from "@/lib/data/product-store";
-import { categoryExists } from "@/lib/data/taxonomy-queries";
+import { replaceProductImageByItemNo } from "@/lib/data/product-store";
 import { uploadProductImage } from "@/lib/supabase/product-images";
-import { resolveBulkUploadItemNo, isAutoItemNoFilename } from "@/lib/utils/item-no";
-import type { ProductCategorySlug } from "@/lib/constants/categories";
-import type { ProductSubCategorySlug } from "@/lib/constants/sub-categories";
-import type { ProductStatus } from "@/types/product";
+import {
+  isAutoItemNoFilename,
+  resolveBulkUploadItemNo,
+} from "@/lib/utils/item-no";
 
 function revalidateProductPages() {
   revalidatePath("/");
@@ -24,21 +23,9 @@ export async function POST(request: NextRequest) {
   }
 
   const file = formData.get("file");
-  const categorySlug = String(formData.get("categorySlug") ?? "").trim();
-  const subCategorySlug = String(formData.get("subCategorySlug") ?? "").trim();
-  const status = String(formData.get("status") ?? "draft").trim() as ProductStatus;
-  const updateExisting = formData.get("updateExisting") === "true";
 
   if (!file || !(file instanceof File)) {
     return NextResponse.json({ message: "未选择文件" }, { status: 400 });
-  }
-
-  if (!categorySlug) {
-    return NextResponse.json({ message: "请选择 Category" }, { status: 400 });
-  }
-
-  if (!(await categoryExists(categorySlug))) {
-    return NextResponse.json({ message: "Category 不存在" }, { status: 400 });
   }
 
   const itemNoFromForm = String(formData.get("itemNo") ?? "").trim();
@@ -56,16 +43,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const imageUrl = await uploadProductImage(file, { itemNo });
-    const result = await upsertProductImageByItemNo({
-      itemNo,
-      categorySlug: categorySlug as ProductCategorySlug,
-      subCategorySlug: (subCategorySlug || undefined) as
-        | ProductSubCategorySlug
-        | undefined,
-      imageUrl,
-      status,
-      updateExisting,
-    });
+    const result = await replaceProductImageByItemNo({ itemNo, imageUrl });
 
     if (result.action === "skipped") {
       return NextResponse.json({
@@ -83,8 +61,7 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : "导入失败，请重试";
-    const statusCode = message.includes("already used") ? 409 : 500;
-    return NextResponse.json({ message }, { status: statusCode });
+      error instanceof Error ? error.message : "更新图片失败，请重试";
+    return NextResponse.json({ message }, { status: 500 });
   }
 }

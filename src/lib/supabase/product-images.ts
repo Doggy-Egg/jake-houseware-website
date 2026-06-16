@@ -1,5 +1,6 @@
 import { slugify } from "@/lib/utils/slug";
 import { createSupabaseAdmin } from "@/lib/supabase/server";
+import { compressProductImage } from "@/lib/supabase/compress-product-image";
 
 export const PRODUCT_IMAGE_BUCKET = "product-images";
 export const MAX_PRODUCT_IMAGE_SIZE = 5 * 1024 * 1024;
@@ -27,18 +28,24 @@ export async function uploadProductImage(
     throw new Error("图片大小不能超过 5MB");
   }
 
-  const extension = PRODUCT_IMAGE_TYPES.get(file.type)!;
   const base = options?.itemNo?.trim()
     ? slugify(options.itemNo) || "product"
     : slugify(file.name.replace(/\.[^.]+$/i, "") || "product-image");
-  const fileName = `${base}-${Date.now()}${extension}`;
-  const buffer = Buffer.from(await file.arrayBuffer());
+  const fileNameBase = `${base}-${Date.now()}`;
+
+  const rawBuffer = Buffer.from(await file.arrayBuffer());
+  const compressed = await compressProductImage(rawBuffer, file.type);
+
+  const uploadBuffer = compressed?.buffer ?? rawBuffer;
+  const contentType = compressed?.contentType ?? file.type;
+  const extension = compressed?.extension ?? PRODUCT_IMAGE_TYPES.get(file.type)!;
+  const fileName = `${fileNameBase}${extension}`;
 
   const supabase = createSupabaseAdmin();
   const { error } = await supabase.storage
     .from(PRODUCT_IMAGE_BUCKET)
-    .upload(fileName, buffer, {
-      contentType: file.type,
+    .upload(fileName, uploadBuffer, {
+      contentType,
       upsert: false,
     });
 

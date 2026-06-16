@@ -3,10 +3,13 @@ export function parseItemNoFromFilename(filename: string): string {
   return filename.replace(/\.[^.]+$/i, "").trim();
 }
 
-/** Filenames that look like a product Item No. (JK / JH prefix). */
+/** JK/JH plus legacy prefixes (BA, WA, SH, M07-style). */
+const AUTO_ITEM_NO_PREFIX = /^(JK|JH|BA|WA|SH|M\d)/i;
+
+/** Filenames that look like a product Item No. */
 export function isAutoItemNoFilename(filename: string): boolean {
   const base = parseItemNoFromFilename(filename);
-  return /^(JK|JH)/i.test(base);
+  return AUTO_ITEM_NO_PREFIX.test(base);
 }
 
 /** Resolve Item No. from filename, with optional manual override. */
