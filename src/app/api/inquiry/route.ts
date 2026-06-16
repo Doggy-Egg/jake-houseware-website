@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
 import type { InquiryItem, InquirySubmission } from "@/types/inquiry";
-import { saveInquiry } from "@/lib/data/inquiry-store";
+import { getEmailNotConfiguredMessage, isEmailConfigured } from "@/lib/email/config";
+import {
+  createInquiryReference,
+  persistInquiryLocally,
+} from "@/lib/email/inquiry-persistence";
+import { sendInquiryEmail } from "@/lib/email/send-mail";
 
 function validateInquiryBody(body: unknown): {
   data?: Omit<InquirySubmission, "items"> & { items: InquiryItem[] };
@@ -41,6 +46,13 @@ function validateInquiryBody(body: unknown): {
 }
 
 export async function POST(request: Request) {
+  if (!isEmailConfigured()) {
+    return NextResponse.json(
+      { message: getEmailNotConfiguredMessage() },
+      { status: 503 },
+    );
+  }
+
   let body: unknown;
 
   try {
@@ -58,18 +70,26 @@ export async function POST(request: Request) {
     );
   }
 
-  const record = saveInquiry(data);
+  const inquiryId = createInquiryReference();
 
-  console.info("[inquiry submission]", {
-    id: record.id,
-    companyName: record.companyName,
-    email: record.email,
-    itemCount: record.items.length,
-  });
+  try {
+    await sendInquiryEmail(data, inquiryId);
+  } catch (error) {
+    console.error("[inquiry submission]", error);
+    return NextResponse.json(
+      {
+        message:
+          "We could not send your inquiry right now. Please email us directly or try again later.",
+      },
+      { status: 502 },
+    );
+  }
+
+  await persistInquiryLocally(data);
 
   return NextResponse.json({
     message:
-      "Thank you. Your inquiry has been received. Our team will respond within one business day.",
-    id: record.id,
+      "Thank you. Your inquiry has been sent. Our team will respond within one business day.",
+    id: inquiryId,
   });
 }

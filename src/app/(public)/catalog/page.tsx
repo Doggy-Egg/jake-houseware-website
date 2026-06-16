@@ -5,22 +5,35 @@ import { Button } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { readCategories } from "@/lib/constants/categories";
+import { catalogPageCopy } from "@/lib/constants/catalog";
 import {
-  catalogConfig,
-  getCatalogDownloadUrl,
-  getCatalogFileSize,
-} from "@/lib/constants/catalog";
+  formatCatalogFileSize,
+  getCatalogFileInfo,
+} from "@/lib/supabase/catalog-pdf";
 
 export const metadata: Metadata = {
   title: "Catalog",
   description:
-    "Download the JAKE HOUSEWARE wholesale product catalog PDF. Browse wine, bar, coffee, and kitchen houseware products for B2B partners.",
+    "Download the JAKE HOUSEWARE wholesale product catalog PDF or browse products online.",
 };
 
+function formatDisplayDate(iso: string) {
+  try {
+    return new Date(iso).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  } catch {
+    return iso;
+  }
+}
+
 export default async function CatalogPage() {
-  const downloadUrl = getCatalogDownloadUrl();
-  const fileSize = getCatalogFileSize();
-  const categories = await readCategories();
+  const [catalog, categories] = await Promise.all([
+    getCatalogFileInfo(),
+    readCategories(),
+  ]);
 
   return (
     <>
@@ -29,97 +42,68 @@ export default async function CatalogPage() {
           <div className="max-w-3xl">
             <Badge variant="gold">Wholesale Resources</Badge>
             <h1 className="mt-6 text-4xl font-semibold tracking-tight text-foreground md:text-5xl">
-              Product Catalog
+              {catalogPageCopy.title}
             </h1>
             <p className="mt-6 text-lg leading-relaxed text-muted">
-              {catalogConfig.description}
+              {catalogPageCopy.description}
             </p>
             <div className="mt-8 flex flex-wrap gap-4">
-              <Button href={downloadUrl} size="lg" download>
-                Download PDF
-              </Button>
+              {catalog ? (
+                <Button href={catalog.downloadUrl} size="lg" download>
+                  Download PDF
+                </Button>
+              ) : (
+                <Button size="lg" disabled>
+                  PDF not available yet
+                </Button>
+              )}
               <Button href="/products" variant="outline" size="lg">
                 Browse Online Catalog
               </Button>
             </div>
+            {!catalog ? (
+              <p className="mt-4 text-sm text-muted">
+                The catalog PDF is being prepared. You can browse products online
+                or contact us for a copy.
+              </p>
+            ) : null}
           </div>
         </Container>
       </section>
 
-      <section className="py-16 md:py-20">
-        <Container>
-          <div className="grid gap-12 lg:grid-cols-2 lg:gap-20">
-            <div>
-              <SectionHeading
-                eyebrow="Catalog Details"
-                title={catalogConfig.title}
-              />
+      {catalog ? (
+        <section className="py-16 md:py-20">
+          <Container>
+            <div className="max-w-xl">
+              <SectionHeading eyebrow="File" title="Download details" />
               <dl className="mt-8 space-y-4">
-                <DetailRow label="Version" value={catalogConfig.version} />
-                <DetailRow label="Last Updated" value={catalogConfig.updatedAt} />
-                <DetailRow label="Language" value={catalogConfig.language} />
-                <DetailRow
-                  label="Pages"
-                  value={String(catalogConfig.pages)}
-                />
-                <DetailRow label="File Size" value={fileSize} />
                 <DetailRow label="Format" value="PDF" />
+                <DetailRow
+                  label="File Size"
+                  value={formatCatalogFileSize(catalog.fileSizeBytes)}
+                />
+                <DetailRow
+                  label="Last Updated"
+                  value={formatDisplayDate(catalog.updatedAt)}
+                />
               </dl>
             </div>
+          </Container>
+        </section>
+      ) : null}
 
-            <div>
-              <SectionHeading
-                eyebrow="What's Included"
-                title="Catalog highlights"
-              />
-              <ul className="mt-8 space-y-3">
-                {catalogConfig.highlights.map((item) => (
-                  <li
-                    key={item}
-                    className="flex items-start gap-3 text-sm text-muted"
-                  >
-                    <span className="mt-1 text-accent" aria-hidden="true">
-                      ✓
-                    </span>
-                    {item}
-                  </li>
-                ))}
-              </ul>
-
-              <div className="mt-10 rounded-sm border border-border bg-muted-bg p-6">
-                <p className="text-sm font-medium text-foreground">
-                  Need a custom selection?
-                </p>
-                <p className="mt-2 text-sm leading-relaxed text-muted">
-                  Build an inquiry list online or contact our team for a
-                  tailored product selection and quotation.
-                </p>
-                <div className="mt-4 flex flex-wrap gap-3">
-                  <Link
-                    href="/inquiry"
-                    className="text-sm font-medium text-accent hover:text-accent-hover"
-                  >
-                    View Inquiry List →
-                  </Link>
-                  <Link
-                    href="/contact"
-                    className="text-sm font-medium text-accent hover:text-accent-hover"
-                  >
-                    Contact Us →
-                  </Link>
-                </div>
-              </div>
-            </div>
-          </div>
-        </Container>
-      </section>
-
-      <section className="border-t border-border bg-muted-bg py-16 md:py-20">
+      <section
+        className={
+          catalog
+            ? "border-t border-border bg-muted-bg py-16 md:py-20"
+            : "py-16 md:py-20"
+        }
+      >
         <Container>
           <SectionHeading
             eyebrow="Categories"
-            title="Product categories in this catalog"
-            description="Seven focused houseware categories for global B2B partners."
+            title="Product categories"
+            description="Browse by category in the online catalog."
           />
           <ul className="mt-10 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {categories.map((category) => (
@@ -136,6 +120,30 @@ export default async function CatalogPage() {
               </li>
             ))}
           </ul>
+
+          <div className="mt-10 rounded-sm border border-border bg-surface p-6">
+            <p className="text-sm font-medium text-foreground">
+              Need a custom selection?
+            </p>
+            <p className="mt-2 text-sm leading-relaxed text-muted">
+              Build an inquiry list online or contact our team for a tailored
+              product selection and quotation.
+            </p>
+            <div className="mt-4 flex flex-wrap gap-3">
+              <Link
+                href="/inquiry"
+                className="text-sm font-medium text-accent hover:text-accent-hover"
+              >
+                View Inquiry List →
+              </Link>
+              <Link
+                href="/contact"
+                className="text-sm font-medium text-accent hover:text-accent-hover"
+              >
+                Contact Us →
+              </Link>
+            </div>
+          </div>
         </Container>
       </section>
     </>

@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import type { ContactFormData } from "@/types/contact";
+import { getEmailNotConfiguredMessage, isEmailConfigured } from "@/lib/email/config";
+import { sendContactEmail } from "@/lib/email/send-mail";
 
 function validateContactBody(body: unknown): {
   data?: ContactFormData;
@@ -43,6 +45,13 @@ function validateContactBody(body: unknown): {
 }
 
 export async function POST(request: Request) {
+  if (!isEmailConfigured()) {
+    return NextResponse.json(
+      { message: getEmailNotConfiguredMessage() },
+      { status: 503 },
+    );
+  }
+
   let body: unknown;
 
   try {
@@ -63,14 +72,21 @@ export async function POST(request: Request) {
     );
   }
 
-  // Phase 1: mock handler — log submission, no email delivery yet.
-  console.info("[contact submission]", {
-    ...data,
-    receivedAt: new Date().toISOString(),
-  });
+  try {
+    await sendContactEmail(data);
+  } catch (error) {
+    console.error("[contact submission]", error);
+    return NextResponse.json(
+      {
+        message:
+          "We could not send your message right now. Please email us directly or try again later.",
+      },
+      { status: 502 },
+    );
+  }
 
   return NextResponse.json({
     message:
-      "Thank you. Your message has been received. Our team will respond within one business day.",
+      "Thank you. Your message has been sent. Our team will respond within one business day.",
   });
 }

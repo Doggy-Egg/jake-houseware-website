@@ -5,3 +5,6 @@ export const contactInfo = {
   address: "Nanjing, Jiangsu, China",
   businessHours: "Mon – Fri, 9:00 – 18:00 (GMT+8)",
 } as const;
+
+/** Receives Contact form & Inquiry List submissions (override with NOTIFY_EMAIL). */
+export const formNotifyEmail = "gabriel@chinajake.com";
