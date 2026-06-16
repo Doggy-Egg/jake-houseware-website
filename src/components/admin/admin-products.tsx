@@ -203,6 +203,9 @@ export function AdminProductsTable() {
           <Button href="/admin/products/bulk-upload" variant="outline">
             批量上传
           </Button>
+          <Button href="/admin/products/local-library-sync" variant="outline">
+            本地图库对比
+          </Button>
           <Button href="/admin/products/bulk-update-images" variant="outline">
             批量更新图片
           </Button>
@@ -211,6 +214,9 @@ export function AdminProductsTable() {
           </Button>
           <Button href="/admin/products/bulk-deactivate" variant="outline">
             批量下架
+          </Button>
+          <Button href="/admin/products/bulk-reassign-category" variant="outline">
+            批量转移分类
           </Button>
           <Button href="/admin/products/bulk-delete" variant="outline">
             批量删除产品

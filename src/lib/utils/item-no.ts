@@ -1,3 +1,5 @@
+import { normalizeItemNoKey } from "@/lib/utils/slug";
+
 /** Item No. from image filename, e.g. `JH-BW-001.jpg` → `JH-BW-001` */
 export function parseItemNoFromFilename(filename: string): string {
   return filename.replace(/\.[^.]+$/i, "").trim();
@@ -27,6 +29,52 @@ export function resolveBulkUploadItemNo(
   }
 
   return "";
+}
+
+/** Candidate keys for matching a local filename to an uploaded Item No. */
+export function itemNoKeysFromFilename(filename: string): string[] {
+  const stem = parseItemNoFromFilename(filename);
+  const keys: string[] = [];
+  const seen = new Set<string>();
+
+  const push = (value: string) => {
+    const key = normalizeItemNoKey(value);
+    if (!key || seen.has(key)) return;
+    seen.add(key);
+    keys.push(key);
+  };
+
+  push(stem);
+
+  const resolved = resolveBulkUploadItemNo(filename);
+  if (resolved) {
+    push(resolved);
+  }
+
+  if (isAutoItemNoFilename(filename)) {
+    const head = stem.split(/\s+/)[0] ?? "";
+    push(head);
+
+    const code = head.match(/^((?:JK|JH|BA|WA|SH|M\d)[\w-]*)/i)?.[1];
+    if (code) {
+      push(code);
+    }
+  }
+
+  return keys;
+}
+
+export function matchFilenameToUploadedItemNos(
+  filename: string,
+  uploadedKeys: ReadonlySet<string>,
+): string | null {
+  for (const key of itemNoKeysFromFilename(filename)) {
+    if (uploadedKeys.has(key)) {
+      return key;
+    }
+  }
+
+  return null;
 }
 
 /** Parse pasted Item No. list (one per line, or comma-separated). */

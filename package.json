@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "seed:supabase": "tsx scripts/seed-supabase.ts"
+    "seed:supabase": "tsx scripts/seed-supabase.ts",
+    "images:prune-uploaded": "tsx scripts/prune-uploaded-local-images.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.49.1",

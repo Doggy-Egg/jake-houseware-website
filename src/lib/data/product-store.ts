@@ -279,6 +279,51 @@ export async function bulkSetProductStatus(options: {
   return { updated: targets.length, notFound };
 }
 
+export async function bulkReassignProductCategory(options: {
+  productIds: string[];
+  categorySlug: ProductCategorySlug;
+  subCategorySlug?: ProductSubCategorySlug | null;
+}): Promise<{ updated: number; skipped: number }> {
+  const productIds = [...new Set(options.productIds.filter(Boolean))];
+  if (productIds.length === 0) {
+    return { updated: 0, skipped: 0 };
+  }
+
+  if (!(await categoryExists(options.categorySlug))) {
+    throw new ProductStoreError("Category 不存在");
+  }
+
+  const subCategorySlug = options.subCategorySlug?.trim() || undefined;
+  if (
+    subCategorySlug &&
+    !(await isSubCategoryValidForCategory(
+      options.categorySlug,
+      subCategorySlug,
+    ))
+  ) {
+    throw new ProductStoreError("Sub-category 与所选 Category 不匹配");
+  }
+
+  const supabase = createSupabaseAdmin();
+  const now = new Date().toISOString();
+  const { data, error } = await supabase
+    .from("products")
+    .update({
+      category_slug: options.categorySlug,
+      sub_category_slug: subCategorySlug ?? null,
+      updated_at: now,
+    })
+    .in("id", productIds)
+    .select("id");
+
+  if (error) {
+    throw new ProductStoreError(error.message);
+  }
+
+  const updated = data?.length ?? 0;
+  return { updated, skipped: productIds.length - updated };
+}
+
 function collectProductImageUrls(product: Product): string[] {
   const urls = new Set<string>();
   for (const url of product.images) {
