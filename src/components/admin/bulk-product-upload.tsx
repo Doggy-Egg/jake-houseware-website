@@ -13,6 +13,10 @@ import {
   resolveBulkUploadItemNo,
 } from "@/lib/utils/item-no";
 import type { ProductStatus } from "@/types/product";
+import {
+  formatAdminUploadFetchError,
+  readAdminUploadResponse,
+} from "@/lib/utils/admin-upload-response";
 
 type TaxonomyCategory = { slug: string; name: string };
 type TaxonomySubCategory = {
@@ -163,18 +167,14 @@ export function BulkProductUploadForm() {
           method: "POST",
           body: formData,
         });
-        const data = (await response.json()) as {
-          action?: "created" | "updated" | "skipped";
-          itemNo?: string;
-          message?: string;
-        };
+        const { ok, data, message } = await readAdminUploadResponse(response);
 
-        if (!response.ok) {
+        if (!ok) {
           nextResults.push({
             fileName: entry.file.name,
             itemNo,
             status: "error",
-            message: data.message ?? "导入失败",
+            message: message || "导入失败",
           });
         } else if (data.action === "skipped") {
           nextResults.push({
@@ -192,12 +192,12 @@ export function BulkProductUploadForm() {
             action: data.action,
           });
         }
-      } catch {
+      } catch (error) {
         nextResults.push({
           fileName: entry.file.name,
           itemNo,
           status: "error",
-          message: "网络错误",
+          message: formatAdminUploadFetchError(error),
         });
       }
 

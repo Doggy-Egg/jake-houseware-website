@@ -22,11 +22,34 @@ export function isAllowedProductImageType(type: string) {
   return PRODUCT_IMAGE_TYPES.has(type);
 }
 
+function resolveImageMimeType(file: File): string {
+  if (file.type && isAllowedProductImageType(file.type)) {
+    return file.type;
+  }
+
+  const extension = file.name.match(/\.[^.]+$/i)?.[0]?.toLowerCase();
+  const byExtension: Record<string, string> = {
+    ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg",
+    ".png": "image/png",
+    ".webp": "image/webp",
+    ".gif": "image/gif",
+  };
+
+  if (extension && byExtension[extension]) {
+    return byExtension[extension]!;
+  }
+
+  return file.type;
+}
+
 export async function uploadProductImage(
   file: File,
   options?: { itemNo?: string },
 ): Promise<string> {
-  if (!isAllowedProductImageType(file.type)) {
+  const mimeType = resolveImageMimeType(file);
+
+  if (!isAllowedProductImageType(mimeType)) {
     throw new Error("仅支持 JPG、PNG、WebP、GIF 格式");
   }
 
@@ -40,11 +63,11 @@ export async function uploadProductImage(
   const fileNameBase = `${base}-${Date.now()}`;
 
   const rawBuffer = Buffer.from(await file.arrayBuffer());
-  const compressed = await compressProductImage(rawBuffer, file.type);
+  const compressed = await compressProductImage(rawBuffer, mimeType);
 
   const uploadBuffer = compressed?.buffer ?? rawBuffer;
-  const contentType = compressed?.contentType ?? file.type;
-  const extension = compressed?.extension ?? PRODUCT_IMAGE_TYPES.get(file.type)!;
+  const contentType = compressed?.contentType ?? mimeType;
+  const extension = compressed?.extension ?? PRODUCT_IMAGE_TYPES.get(mimeType)!;
   const fileName = `${fileNameBase}${extension}`;
 
   const supabase = createSupabaseAdmin();

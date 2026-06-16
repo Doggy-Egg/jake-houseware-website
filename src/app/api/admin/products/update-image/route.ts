@@ -7,6 +7,8 @@ import {
   resolveBulkUploadItemNo,
 } from "@/lib/utils/item-no";
 
+export const runtime = "nodejs";
+
 function revalidateProductPages() {
   revalidatePath("/");
   revalidatePath("/products");

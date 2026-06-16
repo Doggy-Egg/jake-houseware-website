@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { uploadProductImage } from "@/lib/supabase/product-images";
 
+export const runtime = "nodejs";
+
 export async function POST(request: NextRequest) {
   let formData: FormData;
 

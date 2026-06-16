@@ -9,6 +9,10 @@ import {
   parseItemNoFromFilename,
   resolveBulkUploadItemNo,
 } from "@/lib/utils/item-no";
+import {
+  formatAdminUploadFetchError,
+  readAdminUploadResponse,
+} from "@/lib/utils/admin-upload-response";
 
 type UpdateResult = {
   fileName: string;
@@ -112,18 +116,14 @@ export function BulkUpdateImagesForm() {
           method: "POST",
           body: formData,
         });
-        const data = (await response.json()) as {
-          action?: "updated" | "skipped";
-          itemNo?: string;
-          message?: string;
-        };
+        const { ok, data, message } = await readAdminUploadResponse(response);
 
-        if (!response.ok) {
+        if (!ok) {
           nextResults.push({
             fileName: entry.file.name,
             itemNo,
             status: "error",
-            message: data.message ?? "更新失败",
+            message: message || "更新失败",
           });
         } else if (data.action === "skipped") {
           nextResults.push({
@@ -139,12 +139,12 @@ export function BulkUpdateImagesForm() {
             status: "success",
           });
         }
-      } catch {
+      } catch (error) {
         nextResults.push({
           fileName: entry.file.name,
           itemNo,
           status: "error",
-          message: "网络错误",
+          message: formatAdminUploadFetchError(error),
         });
       }
 

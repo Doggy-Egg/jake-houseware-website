@@ -8,6 +8,8 @@ import type { ProductCategorySlug } from "@/lib/constants/categories";
 import type { ProductSubCategorySlug } from "@/lib/constants/sub-categories";
 import type { ProductStatus } from "@/types/product";
 
+export const runtime = "nodejs";
+
 function revalidateProductPages() {
   revalidatePath("/");
   revalidatePath("/products");
@@ -15,6 +17,17 @@ function revalidateProductPages() {
 }
 
 export async function POST(request: NextRequest) {
+  try {
+    return await handleImportImage(request);
+  } catch (error) {
+    console.error("[import-image]", error);
+    const message =
+      error instanceof Error ? error.message : "导入失败，请重试";
+    return NextResponse.json({ message }, { status: 500 });
+  }
+}
+
+async function handleImportImage(request: NextRequest) {
   let formData: FormData;
 
   try {

@@ -4,6 +4,7 @@ import { getSupabaseImageHostname } from "./src/lib/utils/supabase-image";
 const supabaseHostname = getSupabaseImageHostname();
 
 const nextConfig: NextConfig = {
+  serverExternalPackages: ["sharp"],
   images: supabaseHostname
     ? {
         remotePatterns: [
