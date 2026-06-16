@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ContactForm } from "@/components/contact/contact-form";
 import { Container } from "@/components/ui/container";
 import { SectionHeading } from "@/components/ui/section-heading";
+import { contactInfo } from "@/lib/constants/contact";
 
 export const metadata: Metadata = {
   title: "Contact Us",
@@ -13,20 +14,21 @@ export const metadata: Metadata = {
 const contactDetails = [
   {
     label: "Email",
-    value: "info@jakehouseware.com",
-    href: "mailto:info@jakehouseware.com",
+    value: contactInfo.email,
+    href: `mailto:${contactInfo.email}`,
   },
   {
     label: "Phone",
-    value: "+86 XXX XXXX XXXX",
+    value: contactInfo.phone,
+    href: `tel:${contactInfo.phoneTel}`,
   },
   {
     label: "Location",
-    value: "Guangdong, China",
+    value: contactInfo.address,
   },
   {
     label: "Business Hours",
-    value: "Mon – Fri, 9:00 – 18:00 (GMT+8)",
+    value: contactInfo.businessHours,
   },
 ];
 

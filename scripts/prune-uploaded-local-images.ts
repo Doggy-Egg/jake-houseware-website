@@ -1,5 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
-import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, unlinkSync, writeFileSync } from "fs";
+import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, rmdirSync, statSync, unlinkSync, writeFileSync } from "fs";
 import { basename, dirname, join, relative, resolve } from "path";
 import {
   matchFilenameToUploadedItemNos,
@@ -171,7 +171,7 @@ function removeEmptyDirectories(dir: string): void {
     const child = join(dir, entry.name);
     removeEmptyDirectories(child);
     if (readdirSync(child).length === 0) {
-      rmSync(child);
+      rmdirSync(child);
     }
   }
 }

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Logo } from "@/components/layout/logo";
 import { Container } from "@/components/ui/container";
 import { mainNavigation } from "@/lib/constants/navigation";
+import { contactInfo } from "@/lib/constants/contact";
 import { siteConfig } from "@/lib/constants/site";
 
 const footerLinks = mainNavigation.filter(
@@ -50,14 +51,21 @@ export function Footer() {
             <ul className="mt-4 space-y-3 text-sm text-accent-foreground/85">
               <li>
                 <a
-                  href="mailto:info@jakehouseware.com"
+                  href={`mailto:${contactInfo.email}`}
                   className="transition-colors hover:text-gold"
                 >
-                  info@jakehouseware.com
+                  {contactInfo.email}
                 </a>
               </li>
-              <li>+86 XXX XXXX XXXX</li>
-              <li>Guangdong, China</li>
+              <li>
+                <a
+                  href={`tel:${contactInfo.phoneTel}`}
+                  className="transition-colors hover:text-gold"
+                >
+                  {contactInfo.phone}
+                </a>
+              </li>
+              <li>{contactInfo.address}</li>
             </ul>
           </div>
         </div>
