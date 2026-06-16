@@ -1,8 +1,14 @@
 import { slugify } from "@/lib/utils/slug";
 import { createSupabaseAdmin } from "@/lib/supabase/server";
 import { compressProductImage } from "@/lib/supabase/compress-product-image";
+import { PRODUCT_IMAGE_BUCKET } from "@/lib/supabase/product-image-storage";
 
-export const PRODUCT_IMAGE_BUCKET = "product-images";
+export { PRODUCT_IMAGE_BUCKET } from "@/lib/supabase/product-image-storage";
+export {
+  deleteProductImagesFromStorage,
+  getStoragePathFromPublicUrl,
+} from "@/lib/supabase/product-image-storage";
+
 export const MAX_PRODUCT_IMAGE_SIZE = 5 * 1024 * 1024;
 
 export const PRODUCT_IMAGE_TYPES = new Map([
@@ -58,33 +64,4 @@ export async function uploadProductImage(
   } = supabase.storage.from(PRODUCT_IMAGE_BUCKET).getPublicUrl(fileName);
 
   return publicUrl;
-}
-
-export function getStoragePathFromPublicUrl(url: string): string | null {
-  const marker = `/storage/v1/object/public/${PRODUCT_IMAGE_BUCKET}/`;
-  const index = url.indexOf(marker);
-  if (index === -1) {
-    return null;
-  }
-
-  return decodeURIComponent(url.slice(index + marker.length));
-}
-
-export async function deleteProductImagesFromStorage(urls: string[]) {
-  const paths = urls
-    .map((url) => getStoragePathFromPublicUrl(url))
-    .filter((path): path is string => Boolean(path));
-
-  if (paths.length === 0) {
-    return;
-  }
-
-  const supabase = createSupabaseAdmin();
-  const { error } = await supabase.storage
-    .from(PRODUCT_IMAGE_BUCKET)
-    .remove(paths);
-
-  if (error) {
-    throw new Error(error.message);
-  }
 }

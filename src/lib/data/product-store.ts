@@ -7,7 +7,7 @@ import {
   type ProductRow,
 } from "@/lib/supabase/mappers";
 import { createSupabaseAdmin } from "@/lib/supabase/server";
-import { deleteProductImagesFromStorage } from "@/lib/supabase/product-images";
+import { deleteProductImagesFromStorage } from "@/lib/supabase/product-image-storage";
 import {
   generateProductId,
   normalizeItemNoKey,

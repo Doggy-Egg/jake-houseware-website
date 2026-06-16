@@ -22,7 +22,12 @@ export default async function AdminProtectedLayout({
     redirect("/admin/login");
   }
 
-  const products = await readProducts();
+  let products: Awaited<ReturnType<typeof readProducts>> = [];
+  try {
+    products = await readProducts();
+  } catch (error) {
+    console.error("[admin layout] Failed to load products:", error);
+  }
 
   return (
     <AdminProductsProvider initialProducts={products}>
