@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { revalidatePath } from "next/cache";
 import { replaceProductImageByItemNo } from "@/lib/data/product-store";
 import { uploadProductImage } from "@/lib/supabase/product-images";
+import { revalidatePublicCatalog } from "@/lib/cache/revalidate-public";
 import {
   isAutoItemNoFilename,
   resolveBulkUploadItemNo,
@@ -10,9 +10,7 @@ import {
 export const runtime = "nodejs";
 
 function revalidateProductPages() {
-  revalidatePath("/");
-  revalidatePath("/products");
-  revalidatePath("/collections", "layout");
+  revalidatePublicCatalog();
 }
 
 export async function POST(request: NextRequest) {

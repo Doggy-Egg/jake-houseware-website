@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { revalidatePath } from "next/cache";
+import { revalidatePublicCatalog } from "@/lib/cache/revalidate-public";
 import {
   deleteProduct,
   updateProduct,
@@ -7,10 +7,7 @@ import {
 } from "@/lib/data/product-store";
 
 function revalidateProductPages(slug?: string) {
-  revalidatePath("/");
-  revalidatePath("/products");
-  if (slug) revalidatePath(`/products/${slug}`);
-  revalidatePath("/collections", "layout");
+  revalidatePublicCatalog(slug);
 }
 
 type RouteContext = {

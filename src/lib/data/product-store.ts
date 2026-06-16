@@ -14,6 +14,11 @@ import {
   resolveProductSlug,
 } from "@/lib/utils/slug";
 import { normalizeProductStatus } from "@/lib/utils/product-visibility";
+import {
+  escapeIlikePattern,
+  sanitizeProductSearchTerm,
+} from "@/lib/utils/product-search";
+import { PRODUCTS_PAGE_SIZE } from "@/lib/constants/products";
 import type { ProductCategorySlug } from "@/lib/constants/categories";
 import type { ProductSubCategorySlug } from "@/lib/constants/sub-categories";
 import type { CollectionSlug } from "@/lib/constants/collections";
@@ -567,4 +572,116 @@ export async function migrateProductsToCategory(
   if (error) {
     throw new Error(error.message);
   }
+}
+
+export type PublicProductsFilter = {
+  category?: ProductCategorySlug | null;
+  subCategory?: ProductSubCategorySlug | null;
+  collection?: CollectionSlug | null;
+  query?: string | null;
+  page?: number;
+  pageSize?: number;
+};
+
+function buildPublicProductsQuery(
+  options: PublicProductsFilter,
+  select: { count?: "exact"; head?: boolean } = {},
+) {
+  const supabase = createSupabaseAdmin();
+  let query = supabase
+    .from("products")
+    .select("*", { count: "exact", ...select })
+    .eq("status", "active")
+    .order("item_no", { ascending: true });
+
+  if (options.category) {
+    query = query.eq("category_slug", options.category);
+  }
+
+  if (options.subCategory) {
+    query = query.eq("sub_category_slug", options.subCategory);
+  }
+
+  if (options.collection) {
+    query = query.contains("collection_slugs", [options.collection]);
+  }
+
+  const searchTerm = sanitizeProductSearchTerm(options.query ?? "");
+  if (searchTerm) {
+    const pattern = escapeIlikePattern(searchTerm);
+    query = query.or(
+      `item_no.ilike.%${pattern}%,name.ilike.%${pattern}%,description.ilike.%${pattern}%`,
+    );
+  }
+
+  return query;
+}
+
+export async function readPublicProductsPaginated(
+  options: PublicProductsFilter,
+): Promise<{
+  products: Product[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}> {
+  const pageSize = options.pageSize ?? PRODUCTS_PAGE_SIZE;
+
+  const { count, error: countError } = await buildPublicProductsQuery(options, {
+    head: true,
+  });
+
+  if (countError) {
+    throw new ProductStoreError(countError.message);
+  }
+
+  const total = count ?? 0;
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const requestedPage = Math.max(1, options.page ?? 1);
+  const page = Math.min(requestedPage, totalPages);
+  const from = (page - 1) * pageSize;
+
+  const { data, error } = await buildPublicProductsQuery(options).range(
+    from,
+    from + pageSize - 1,
+  );
+
+  if (error) {
+    throw new ProductStoreError(error.message);
+  }
+
+  const products = ((data ?? []) as ProductRow[])
+    .map(mapProductRow)
+    .map(normalizeProduct);
+
+  return {
+    products,
+    total,
+    page,
+    pageSize,
+    totalPages,
+  };
+}
+
+export async function readActiveSubCategorySlugsForCategory(
+  categorySlug: string,
+): Promise<Set<string>> {
+  const supabase = createSupabaseAdmin();
+  const { data, error } = await supabase
+    .from("products")
+    .select("sub_category_slug")
+    .eq("status", "active")
+    .eq("category_slug", categorySlug)
+    .not("sub_category_slug", "is", null);
+
+  if (error) {
+    throw new ProductStoreError(error.message);
+  }
+
+  return new Set(
+    (data ?? [])
+      .map((row) => row.sub_category_slug)
+      .filter((slug): slug is string => Boolean(slug)),
+  );
 }

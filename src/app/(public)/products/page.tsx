@@ -10,7 +10,7 @@ import {
 import { ProductGrid } from "@/components/products/product-card";
 import { ProductPagination } from "@/components/products/product-pagination";
 import { filterProductsPaginated } from "@/lib/data/queries";
-import { readCategories } from "@/lib/constants/categories";
+import { getCachedCategories } from "@/lib/cache/public-catalog";
 import { readSubCategoriesWithProducts } from "@/lib/constants/sub-categories";
 import type { ProductCategorySlug } from "@/lib/constants/categories";
 import type { ProductSubCategorySlug } from "@/lib/constants/sub-categories";
@@ -24,7 +24,7 @@ type ProductsPageProps = {
   }>;
 };
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 function parsePageParam(value?: string) {
   const parsed = Number.parseInt(value ?? "1", 10);
@@ -37,16 +37,22 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
   const subCategory = params.subCategory as ProductSubCategorySlug | undefined;
   const query = params.q?.trim() || null;
   const page = parsePageParam(params.page);
-  const categories = await readCategories();
-  const subCategories = await readSubCategoriesWithProducts();
 
-  const { products, total, page: currentPage, pageSize, totalPages } =
-    await filterProductsPaginated({
+  const [categories, subCategories, paginated] = await Promise.all([
+    getCachedCategories(),
+    category
+      ? readSubCategoriesWithProducts(category)
+      : Promise.resolve([]),
+    filterProductsPaginated({
       category: category ?? null,
       subCategory: subCategory ?? null,
       query,
       page,
-    });
+    }),
+  ]);
+
+  const { products, total, page: currentPage, pageSize, totalPages } =
+    paginated;
 
   return (
     <Container as="main" className="py-16 md:py-20">

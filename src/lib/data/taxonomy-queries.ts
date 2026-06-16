@@ -3,6 +3,8 @@ import {
   countProductsBySubCategory,
   readTaxonomy,
 } from "@/lib/data/taxonomy-store";
+import { readActiveSubCategorySlugsForCategory } from "@/lib/data/product-store";
+import { getCachedSubCategories } from "@/lib/cache/public-catalog";
 
 export type ProductCategorySlug = string;
 export type ProductSubCategorySlug = string;
@@ -26,17 +28,16 @@ export async function readSubCategories(categorySlug?: string) {
 }
 
 export async function readSubCategoriesWithProducts(categorySlug?: string) {
-  const subCategories = await readSubCategories(categorySlug);
-  const withCounts = await Promise.all(
-    subCategories.map(async (subCategory) => ({
-      subCategory,
-      productCount: await countProductsBySubCategory(subCategory.slug),
-    })),
-  );
+  if (!categorySlug) return [];
 
-  return withCounts
-    .filter((entry) => entry.productCount > 0)
-    .map((entry) => entry.subCategory);
+  const [subCategories, activeSlugs] = await Promise.all([
+    getCachedSubCategories().then((all) =>
+      all.filter((subCategory) => subCategory.categorySlug === categorySlug),
+    ),
+    readActiveSubCategorySlugsForCategory(categorySlug),
+  ]);
+
+  return subCategories.filter((subCategory) => activeSlugs.has(subCategory.slug));
 }
 
 export async function getCategoryName(slug: string): Promise<string> {

@@ -1,14 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { revalidatePath } from "next/cache";
+import { revalidatePublicCatalog } from "@/lib/cache/revalidate-public";
 import { bulkSetProductStatus } from "@/lib/data/product-store";
 import { categoryExists } from "@/lib/data/taxonomy-queries";
 import { parseItemNoList } from "@/lib/utils/item-no";
 import type { ProductStatus } from "@/types/product";
 
 function revalidateProductPages() {
-  revalidatePath("/");
-  revalidatePath("/products");
-  revalidatePath("/collections", "layout");
+  revalidatePublicCatalog();
 }
 
 export async function POST(request: NextRequest) {

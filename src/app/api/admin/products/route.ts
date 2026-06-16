@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { revalidatePath } from "next/cache";
+import { revalidatePublicCatalog } from "@/lib/cache/revalidate-public";
 import {
   createProduct,
   readProducts,
@@ -7,9 +7,7 @@ import {
 } from "@/lib/data/product-store";
 
 function revalidateProductPages() {
-  revalidatePath("/");
-  revalidatePath("/products");
-  revalidatePath("/collections", "layout");
+  revalidatePublicCatalog();
 }
 
 export async function GET() {

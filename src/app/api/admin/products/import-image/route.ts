@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { revalidatePath } from "next/cache";
 import { upsertProductImageByItemNo } from "@/lib/data/product-store";
 import { categoryExists } from "@/lib/data/taxonomy-queries";
 import { uploadProductImage } from "@/lib/supabase/product-images";
+import { revalidatePublicCatalog } from "@/lib/cache/revalidate-public";
 import { resolveBulkUploadItemNo, isAutoItemNoFilename } from "@/lib/utils/item-no";
 import type { ProductCategorySlug } from "@/lib/constants/categories";
 import type { ProductSubCategorySlug } from "@/lib/constants/sub-categories";
@@ -11,9 +11,7 @@ import type { ProductStatus } from "@/types/product";
 export const runtime = "nodejs";
 
 function revalidateProductPages() {
-  revalidatePath("/");
-  revalidatePath("/products");
-  revalidatePath("/collections", "layout");
+  revalidatePublicCatalog();
 }
 
 export async function POST(request: NextRequest) {

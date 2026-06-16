@@ -1,11 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { revalidatePath } from "next/cache";
+import { revalidateTaxonomyPages } from "@/lib/cache/revalidate-public";
 import { createSubCategory } from "@/lib/data/taxonomy-store";
-
-function revalidateTaxonomyPages() {
-  revalidatePath("/products");
-  revalidatePath("/admin/products");
-}
 
 export async function POST(request: NextRequest) {
   let body: { name?: string; slug?: string; categorySlug?: string };

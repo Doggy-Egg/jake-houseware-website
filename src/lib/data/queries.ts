@@ -1,6 +1,9 @@
 import type { Product } from "@/types/product";
 import { PRODUCTS_PAGE_SIZE } from "@/lib/constants/products";
-import { readProducts } from "@/lib/data/product-store";
+import {
+  readProducts,
+  readPublicProductsPaginated,
+} from "@/lib/data/product-store";
 import { isProductPubliclyVisible } from "@/lib/utils/product-visibility";
 import type { ProductCategorySlug } from "@/lib/constants/categories";
 import type { ProductSubCategorySlug } from "@/lib/constants/sub-categories";
@@ -120,21 +123,14 @@ export async function filterProductsPaginated(options: {
   pageSize: number;
   totalPages: number;
 }> {
-  const pageSize = options.pageSize ?? PRODUCTS_PAGE_SIZE;
-  const all = await filterProducts(options);
-  const total = all.length;
-  const totalPages = Math.max(1, Math.ceil(total / pageSize));
-  const requestedPage = Math.max(1, options.page ?? 1);
-  const page = Math.min(requestedPage, totalPages);
-  const start = (page - 1) * pageSize;
-
-  return {
-    products: all.slice(start, start + pageSize),
-    total,
-    page,
-    pageSize,
-    totalPages,
-  };
+  return readPublicProductsPaginated({
+    category: options.category,
+    subCategory: options.subCategory,
+    collection: options.collection,
+    query: options.query,
+    page: options.page,
+    pageSize: options.pageSize ?? PRODUCTS_PAGE_SIZE,
+  });
 }
 
 export async function getAllProductSlugs(): Promise<string[]> {

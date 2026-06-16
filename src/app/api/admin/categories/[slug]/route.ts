@@ -1,19 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { revalidatePath } from "next/cache";
+import { revalidateTaxonomyPages } from "@/lib/cache/revalidate-public";
 import { deleteCategory, updateCategory } from "@/lib/data/taxonomy-store";
 
 type RouteContext = {
   params: Promise<{ slug: string }>;
 };
-
-function revalidateTaxonomyPages() {
-  revalidatePath("/products");
-  revalidatePath("/", "layout");
-  revalidatePath("/collections", "layout");
-  revalidatePath("/about");
-  revalidatePath("/catalog");
-  revalidatePath("/admin/products");
-}
 
 export async function PUT(request: NextRequest, context: RouteContext) {
   const { slug } = await context.params;
