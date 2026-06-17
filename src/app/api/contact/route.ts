@@ -87,6 +87,6 @@ export async function POST(request: Request) {
 
   return NextResponse.json({
     message:
-      "Thank you. Your message has been sent. Our team will respond within one business day.",
+      "Thank you. Your message has been sent.",
   });
 }

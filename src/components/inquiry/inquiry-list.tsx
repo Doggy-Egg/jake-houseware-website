@@ -141,7 +141,7 @@ export function InquiryListContent() {
       <InquirySubmissionForm
         onSuccess={() =>
           setSuccessMessage(
-            "Thank you. Your inquiry has been received. Our team will respond within one business day.",
+            "Thank you. Your inquiry has been received.",
           )
         }
       />

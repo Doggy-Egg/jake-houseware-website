@@ -132,8 +132,7 @@ export default async function HomePage() {
             Ready to discuss a wholesale partnership?
           </h2>
           <p className="mx-auto mt-4 max-w-xl text-base text-accent-foreground/80">
-            Add products to your inquiry list or reach out directly. Our team
-            responds to B2B requests within one business day.
+            Add products to your inquiry list or reach out directly.
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-4">
             <Button href="/inquiry" variant="onDark" size="lg">

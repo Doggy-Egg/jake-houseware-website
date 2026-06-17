@@ -91,7 +91,7 @@ export function ContactForm() {
       setStatus("success");
       setStatusMessage(
         data.message ??
-          "Thank you. Your message has been received. Our team will respond within one business day.",
+          "Thank you. Your message has been received.",
       );
       setForm(initialForm);
     } catch (error) {
@@ -194,7 +194,7 @@ export function ContactForm() {
       </Button>
 
       <p className="text-xs leading-relaxed text-muted">
-        B2B inquiries only. We typically respond within one business day.
+        B2B inquiries only.
       </p>
     </form>
   );
