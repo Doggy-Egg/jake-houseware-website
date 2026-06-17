@@ -22,6 +22,7 @@ import { PRODUCTS_PAGE_SIZE } from "@/lib/constants/products";
 import type { ProductCategorySlug } from "@/lib/constants/categories";
 import type { ProductSubCategorySlug } from "@/lib/constants/sub-categories";
 import type { CollectionSlug } from "@/lib/constants/collections";
+import { collections } from "@/lib/constants/collections";
 import type { Product, ProductStatus } from "@/types/product";
 
 export class ProductStoreError extends Error {
@@ -322,6 +323,63 @@ export async function bulkReassignProductCategory(options: {
 
   const updated = data?.length ?? 0;
   return { updated, skipped: productIds.length - updated };
+}
+
+const validCollectionSlugs = new Set<string>(
+  collections.map((item) => item.slug),
+);
+
+export async function bulkAddProductCollections(options: {
+  productIds: string[];
+  collectionSlugs: CollectionSlug[];
+}): Promise<{ updated: number }> {
+  const productIds = [...new Set(options.productIds.filter(Boolean))];
+  const slugsToAdd = [
+    ...new Set(
+      options.collectionSlugs.filter((slug) => validCollectionSlugs.has(slug)),
+    ),
+  ] as CollectionSlug[];
+
+  if (productIds.length === 0) {
+    return { updated: 0 };
+  }
+
+  if (slugsToAdd.length === 0) {
+    throw new ProductStoreError("请至少选择一个系列");
+  }
+
+  const supabase = createSupabaseAdmin();
+  const allProducts = await readProducts();
+  const idSet = new Set(productIds);
+  const targets = allProducts.filter((product) => idSet.has(product.id));
+
+  if (targets.length === 0) {
+    return { updated: 0 };
+  }
+
+  const now = new Date().toISOString();
+
+  await Promise.all(
+    targets.map(async (product) => {
+      const merged = [
+        ...new Set([...product.collectionSlugs, ...slugsToAdd]),
+      ] as CollectionSlug[];
+
+      const { error } = await supabase
+        .from("products")
+        .update({
+          collection_slugs: merged,
+          updated_at: now,
+        })
+        .eq("id", product.id);
+
+      if (error) {
+        throw new ProductStoreError(error.message);
+      }
+    }),
+  );
+
+  return { updated: targets.length };
 }
 
 function collectProductImageUrls(product: Product): string[] {

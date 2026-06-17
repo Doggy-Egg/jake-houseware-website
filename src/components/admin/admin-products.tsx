@@ -238,8 +238,8 @@ export function AdminProductsTable() {
           <Button href="/admin/products/local-library-sync" variant="outline">
             本地图库对比
           </Button>
-          <Button href="/admin/products/bulk-update-images" variant="outline">
-            批量更新图片
+          <Button href="/admin/products/bulk-assign-collections" variant="outline">
+            批量添加系列
           </Button>
           <Button href="/admin/products/bulk-publish" variant="outline">
             批量发布
