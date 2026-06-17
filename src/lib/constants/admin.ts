@@ -3,6 +3,7 @@ export const adminNavigation = [
   { label: "产品管理", href: "/admin/products" },
   { label: "分类管理", href: "/admin/categories" },
   { label: "目录 PDF", href: "/admin/catalog" },
+  { label: "邮件发送", href: "/admin/email" },
 ] as const;
 
 export const categoryAdminLabels: Record<string, string> = {
