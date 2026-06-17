@@ -4,10 +4,10 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useAdminProducts } from "@/context/admin/admin-products-context";
-import { adminCopy, productStatusLabels } from "@/lib/constants/admin";
-import { lookupTaxonomyName } from "@/lib/utils/taxonomy-lookup";
+import { adminCopy, productStatusLabels, categoryAdminLabels, subCategoryAdminLabels } from "@/lib/constants/admin";
 import { formatCollectionAdminLabels } from "@/lib/utils/admin-labels";
 import { getProductDisplayName } from "@/lib/utils/product-display";
+import { getProductPrimaryImage } from "@/lib/utils/product-image";
 import type { Product } from "@/types/product";
 
 export function AdminDashboardContent() {
@@ -142,6 +142,7 @@ export function AdminProductsTable() {
   const { products, isLoading, deleteProduct } = useAdminProducts();
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState<string>("all");
+  const [subCategory, setSubCategory] = useState<string>("all");
   const [categories, setCategories] = useState<{ slug: string; name: string }[]>(
     [],
   );
@@ -163,10 +164,41 @@ export function AdminProductsTable() {
       );
   }, []);
 
+  const visibleSubCategories = useMemo(
+    () =>
+      category === "all"
+        ? subCategories
+        : subCategories.filter((item) => item.categorySlug === category),
+    [subCategories, category],
+  );
+
+  const categoryLabel = (slug: string) =>
+    categoryAdminLabels[slug] ??
+    categories.find((item) => item.slug === slug)?.name ??
+    slug;
+
+  const subCategoryLabel = (slug: string) =>
+    subCategoryAdminLabels[slug] ??
+    subCategories.find((item) => item.slug === slug)?.name ??
+    slug;
+
+  const handleCategoryChange = (nextCategory: string) => {
+    setCategory(nextCategory);
+    setSubCategory("all");
+  };
+
   const filtered = useMemo(() => {
     return products.filter((product) => {
       const matchesCategory =
         category === "all" || product.categorySlug === category;
+
+      let matchesSubCategory = true;
+      if (subCategory === "__none__") {
+        matchesSubCategory = !product.subCategorySlug;
+      } else if (subCategory !== "all") {
+        matchesSubCategory = product.subCategorySlug === subCategory;
+      }
+
       const normalized = query.trim().toLowerCase();
       const matchesQuery =
         !normalized ||
@@ -174,9 +206,9 @@ export function AdminProductsTable() {
         getProductDisplayName(product).toLowerCase().includes(normalized) ||
         product.itemNo.toLowerCase().includes(normalized) ||
         product.slug.toLowerCase().includes(normalized);
-      return matchesCategory && matchesQuery;
+      return matchesCategory && matchesSubCategory && matchesQuery;
     });
-  }, [products, query, category]);
+  }, [products, query, category, subCategory]);
 
   const handleDelete = async (id: string, name: string) => {
     if (!window.confirm(adminCopy.confirmDelete(name))) return;
@@ -224,35 +256,61 @@ export function AdminProductsTable() {
         </div>
       </div>
 
-      <div className="flex flex-col gap-3 sm:flex-row">
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
         <input
           type="search"
           value={query}
           onChange={(event) => setQuery(event.target.value)}
           placeholder="搜索产品名称、Item No. 或 slug..."
-          className="h-11 flex-1 rounded-sm border border-border bg-surface px-4 text-sm focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
+          className="h-11 min-w-[200px] flex-1 rounded-sm border border-border bg-surface px-4 text-sm focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
         />
         <select
           value={category}
-          onChange={(event) => setCategory(event.target.value)}
+          onChange={(event) => handleCategoryChange(event.target.value)}
           className="h-11 rounded-sm border border-border bg-surface px-4 text-sm focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
         >
           <option value="all">全部分类</option>
           {categories.map((item) => (
             <option key={item.slug} value={item.slug}>
-              {item.name}
+              {categoryLabel(item.slug)}
+            </option>
+          ))}
+        </select>
+        <select
+          value={subCategory}
+          onChange={(event) => setSubCategory(event.target.value)}
+          className="h-11 rounded-sm border border-border bg-surface px-4 text-sm focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
+        >
+          <option value="all">全部 Sub-category</option>
+          <option value="__none__">未指定 Sub-category</option>
+          {visibleSubCategories.map((item) => (
+            <option key={item.slug} value={item.slug}>
+              {subCategoryLabel(item.slug)}
             </option>
           ))}
         </select>
       </div>
 
-      <p className="text-sm text-muted">共 {filtered.length} 个产品</p>
+      <p className="text-sm text-muted">
+        共 {filtered.length} 个产品
+        {category !== "all" ? ` · ${categoryLabel(category)}` : null}
+        {subCategory !== "all" ? (
+          <span>
+            {" "}
+            · Sub:{" "}
+            {subCategory === "__none__"
+              ? "未指定"
+              : subCategoryLabel(subCategory)}
+          </span>
+        ) : null}
+      </p>
 
       <div className="overflow-hidden rounded-sm border border-border bg-surface">
         <div className="overflow-x-auto">
           <table className="min-w-full text-left text-sm">
             <thead className="border-b border-border bg-muted-bg text-xs uppercase tracking-widest text-muted">
               <tr>
+                <th className="w-16 px-5 py-3 font-medium">缩略图</th>
                 <th className="px-5 py-3 font-medium">产品</th>
                 <th className="px-5 py-3 font-medium">Category</th>
                 <th className="px-5 py-3 font-medium">Sub-category</th>
@@ -267,15 +325,32 @@ export function AdminProductsTable() {
               {filtered.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={8}
+                    colSpan={9}
                     className="px-5 py-12 text-center text-muted"
                   >
                     {adminCopy.noProducts}
                   </td>
                 </tr>
               ) : (
-                filtered.map((product) => (
+                filtered.map((product) => {
+                  const image = getProductPrimaryImage(product);
+
+                  return (
                   <tr key={product.id} className="hover:bg-muted-bg/50">
+                    <td className="px-5 py-4">
+                      <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-sm border border-border bg-white">
+                        {image ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={image}
+                            alt=""
+                            className="h-full w-full object-contain"
+                          />
+                        ) : (
+                          <span className="text-[10px] text-muted">无图</span>
+                        )}
+                      </div>
+                    </td>
                     <td className="px-5 py-4">
                       <p className="font-medium text-foreground">
                         {getProductDisplayName(product)}
@@ -285,11 +360,12 @@ export function AdminProductsTable() {
                       </p>
                     </td>
                     <td className="px-5 py-4 text-muted">
-                      {lookupTaxonomyName(categories, product.categorySlug)}
+                      {categoryLabel(product.categorySlug)}
                     </td>
                     <td className="px-5 py-4 text-muted">
-                      {lookupTaxonomyName(subCategories, product.subCategorySlug) ??
-                        "—"}
+                      {product.subCategorySlug
+                        ? subCategoryLabel(product.subCategorySlug)
+                        : "—"}
                     </td>
                     <td className="px-5 py-4">
                       {product.collectionSlugs.length === 0 ? (
@@ -334,7 +410,8 @@ export function AdminProductsTable() {
                       </div>
                     </td>
                   </tr>
-                ))
+                  );
+                })
               )}
             </tbody>
           </table>
